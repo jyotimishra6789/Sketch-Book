@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 export default function SketchApp() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
-
+  const [isEraser, setIsEraser] = useState(false);
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -17,13 +17,15 @@ export default function SketchApp() {
     ctx.lineCap = "round";
     ctx.strokeStyle = color;
     ctx.lineWidth = size;
+      ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctxRef.current = ctx;
   }, []);
 
   useEffect(() => {
     if (ctxRef.current) {
-      ctxRef.current.strokeStyle = color;
+        ctxRef.current.strokeStyle = isEraser ? "#FFFFFF" : color;
       ctxRef.current.lineWidth = size;
     }
   }, [color, size]);
@@ -86,6 +88,12 @@ export default function SketchApp() {
             onChange={(e) => setSize(e.target.value)}
           />
         </label>
+        <button 
+  onClick={() => setIsEraser(!isEraser)}
+  style={{ padding: "6px 12px" }}
+>
+  {isEraser ? "Switch to Brush" : "Use Eraser"}
+</button>
 
         <button onClick={clearCanvas}>Clear</button>
       </div>
