@@ -15,20 +15,23 @@ export default function SketchApp() {
 
     const ctx = canvas.getContext("2d");
     ctx.lineCap = "round";
-    ctx.strokeStyle = color;
     ctx.lineWidth = size;
-      ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = color;
+
+    // Set background to white
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctxRef.current = ctx;
   }, []);
 
+  // Apply brush/eraser settings when changed
   useEffect(() => {
     if (ctxRef.current) {
-        ctxRef.current.strokeStyle = isEraser ? "#FFFFFF" : color;
+      ctxRef.current.strokeStyle = isEraser ? "#FFFFFF" : color;
       ctxRef.current.lineWidth = size;
     }
-  }, [color, size]);
+  }, [color, size, isEraser]);
 
   const startDrawing = (e) => {
     ctxRef.current.beginPath();
@@ -49,7 +52,10 @@ export default function SketchApp() {
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
-    ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Keep white background after clearing
+    ctxRef.current.fillStyle = "white";
+    ctxRef.current.fillRect(0, 0, canvas.width, canvas.height);
   };
 
   return (
@@ -67,6 +73,7 @@ export default function SketchApp() {
           gap: "10px",
           alignItems: "center",
           boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
+          zIndex: 10,
         }}
       >
         <label>
@@ -75,6 +82,7 @@ export default function SketchApp() {
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
+            disabled={isEraser}
           />
         </label>
 
@@ -88,12 +96,13 @@ export default function SketchApp() {
             onChange={(e) => setSize(e.target.value)}
           />
         </label>
-        <button 
-  onClick={() => setIsEraser(!isEraser)}
-  style={{ padding: "6px 12px" }}
->
-  {isEraser ? "Switch to Brush" : "Use Eraser"}
-</button>
+
+        <button
+          onClick={() => setIsEraser(!isEraser)}
+          style={{ padding: "6px 12px" }}
+        >
+          {isEraser ? "Switch to Brush" : "Use Eraser"}
+        </button>
 
         <button onClick={clearCanvas}>Clear</button>
       </div>
@@ -101,7 +110,7 @@ export default function SketchApp() {
       {/* Canvas */}
       <canvas
         ref={canvasRef}
-        style={{ display: "block" }}
+        style={{ display: "block", cursor: isEraser ? "cell" : "crosshair" }}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
