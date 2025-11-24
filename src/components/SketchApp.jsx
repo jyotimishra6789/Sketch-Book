@@ -1,47 +1,58 @@
-import {useRef,useState,useEffect} from "react";
-export default  unction SketchApp(){
-    const canvasRef=useRef(null);
-    const ctxRef=useRef(null);
-    const [color,setColor] =useState("#000000");
-    const [size,setSize]=useState(5);
-    const [isDrawing, setIsDrawing]=useState(false);
-    useEffect(()=>{
-        const canvas=canvasRef.current;
-        canvas.width=window.innerWidth;
-        canvas.height=window.innerHeight;
-        const ctx=canvas.getContext("2d");
-        ctx.lineCap="round";
-        ctx.strokeStyle=color;
-        ctx.lineWidth=size;
-        ctxRef.current=ctx;
-    },[]);
-useEffect(()=>{
-    if(ctxRef.current){
-        ctxRef.current.strokeStyle=color;
-        ctxRef.current.lineWidth=size;
+import { useRef, useState, useEffect } from "react";
+
+export default function SketchApp() {
+  const canvasRef = useRef(null);
+  const ctxRef = useRef(null);
+
+  const [color, setColor] = useState("#000000");
+  const [size, setSize] = useState(5);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.lineCap = "round";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = size;
+
+    ctxRef.current = ctx;
+  }, []);
+
+  useEffect(() => {
+    if (ctxRef.current) {
+      ctxRef.current.strokeStyle = color;
+      ctxRef.current.lineWidth = size;
     }
-},[color,size]);
-const startDrawing=(e)=>{
+  }, [color, size]);
+
+  const startDrawing = (e) => {
     ctxRef.current.beginPath();
-    ctxRef.current.moveTo(e.clientX,e.ClientY);
+    ctxRef.current.moveTo(e.clientX, e.clientY);
     setIsDrawing(true);
-};
-const draw=(e)=>{
-    if(!isDrawing) return;
-    ctxRef.current.lineTo(e.clientX,e.ClientY);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    ctxRef.current.lineTo(e.clientX, e.clientY);
     ctxRef.current.stroke();
-};
-const stopDrawing=()=>{
+  };
+
+  const stopDrawing = () => {
     ctxRef.current.closePath();
     setIsDrawing(false);
-};
-const clearCanvas=()=>{
-   const canvas=canvasRef.current;
-   ctxRef.current.clearRect(0,0, canvas.width,canvas.height);
-};
-return(
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  return (
     <>
-   {/* Controls */}
+      {/* Controls */}
       <div
         style={{
           position: "fixed",
@@ -79,7 +90,15 @@ return(
         <button onClick={clearCanvas}>Clear</button>
       </div>
 
+      {/* Canvas */}
+      <canvas
+        ref={canvasRef}
+        style={{ display: "block" }}
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+      ></canvas>
     </>
-)
-    
+  );
 }
