@@ -75,13 +75,13 @@ let undoPaths=[];
         ctx.stroke();
     });
 }
-// function redo(){
-//   if(undoPaths.length>0){
-//     const restored=undoPaths.pop();
-//     paths.push(restored);
-//     redraw();
-//   }
-// }
+function redo(){
+  if(undoPaths.length>0){
+    const restored=undoPaths.pop();
+    paths.push(restored);
+    redraw();
+  }
+}
 function undo(){
   if(paths.length>0){
     const removed=paths.pop();
