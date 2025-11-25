@@ -57,6 +57,24 @@ export default function SketchApp() {
     ctxRef.current.fillStyle = "white";
     ctxRef.current.fillRect(0, 0, canvas.width, canvas.height);
   };
+  function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    paths.forEach(path => {
+        ctx.strokeStyle = path.color;
+        ctx.lineWidth = path.size;
+
+        ctx.beginPath();
+        ctx.moveTo(path.points[0].x, path.points[0].y);
+
+        path.points.forEach(point => {
+            ctx.lineTo(point.x, point.y);
+        });
+
+        ctx.stroke();
+    });
+}
+
 
   return (
     <>
