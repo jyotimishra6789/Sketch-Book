@@ -7,7 +7,8 @@ export default function SketchApp() {
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
-
+let paths=[];
+let undoPaths=[];
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
@@ -74,7 +75,20 @@ export default function SketchApp() {
         ctx.stroke();
     });
 }
-
+// function redo(){
+//   if(undoPaths.length>0){
+//     const restored=undoPaths.pop();
+//     paths.push(restored);
+//     redraw();
+//   }
+// }
+function undo(){
+  if(paths.length>0){
+    const removed=paths.pop();
+    undoPaths.push(removed);
+    redraw();
+  }
+}
 
   return (
     <>
