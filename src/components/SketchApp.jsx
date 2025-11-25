@@ -3,12 +3,21 @@ import { useRef, useState, useEffect } from "react";
 export default function SketchApp() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
-  const [isEraser, setIsEraser] = useState(false);
+
+  // Brush states
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
+  const [isEraser, setIsEraser] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
-let paths=[];
-let undoPaths=[];
+
+  // Paths storage (NOT state — useRef to avoid rerenders)
+  const pathsRef = useRef([]);
+  const undoRef = useRef([]);
+
+  // Current path while drawing
+  const currentPath = useRef(null);
+
+  // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
@@ -16,79 +25,119 @@ let undoPaths=[];
 
     const ctx = canvas.getContext("2d");
     ctx.lineCap = "round";
-    ctx.lineWidth = size;
-    ctx.strokeStyle = color;
+    ctx.lineJoin = "round";
 
-    // Set background to white
+    // White background
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctxRef.current = ctx;
   }, []);
 
-  // Apply brush/eraser settings when changed
+  // Brush / Eraser settings updated
   useEffect(() => {
     if (ctxRef.current) {
-      ctxRef.current.strokeStyle = isEraser ? "#FFFFFF" : color;
+      ctxRef.current.strokeStyle = isEraser ? "white" : color;
       ctxRef.current.lineWidth = size;
     }
   }, [color, size, isEraser]);
 
+  // Start Drawing
   const startDrawing = (e) => {
-    ctxRef.current.beginPath();
-    ctxRef.current.moveTo(e.clientX, e.clientY);
     setIsDrawing(true);
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+    // New path object
+    currentPath.current = {
+      color: isEraser ? "white" : color,
+      size: size,
+      points: [{ x, y }],
+    };
+
+    ctxRef.current.beginPath();
+    ctxRef.current.moveTo(x, y);
   };
 
+  // Draw
   const draw = (e) => {
     if (!isDrawing) return;
-    ctxRef.current.lineTo(e.clientX, e.clientY);
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+    currentPath.current.points.push({ x, y });
+
+    ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
   };
 
+  // Stop Drawing
   const stopDrawing = () => {
-    ctxRef.current.closePath();
+    if (!isDrawing) return;
+
     setIsDrawing(false);
+    ctxRef.current.closePath();
+
+    // Save finished path
+    pathsRef.current.push(currentPath.current);
+
+    // After new path → redo stack clear
+    undoRef.current = [];
   };
 
+  // Redraw entire canvas
+  const redraw = () => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    pathsRef.current.forEach((path) => {
+      ctx.strokeStyle = path.color;
+      ctx.lineWidth = path.size;
+
+      ctx.beginPath();
+      ctx.moveTo(path.points[0].x, path.points[0].y);
+
+      path.points.forEach((p) => ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+    });
+  };
+
+  // Undo
+  const undo = () => {
+    if (pathsRef.current.length === 0) return;
+
+    const removed = pathsRef.current.pop();
+    undoRef.current.push(removed);
+
+    redraw();
+  };
+
+  // Redo
+  const redo = () => {
+    if (undoRef.current.length === 0) return;
+
+    const restored = undoRef.current.pop();
+    pathsRef.current.push(restored);
+
+    redraw();
+  };
+
+  // Clear Canvas
   const clearCanvas = () => {
     const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
 
-    // Keep white background after clearing
-    ctxRef.current.fillStyle = "white";
-    ctxRef.current.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    pathsRef.current = [];
+    undoRef.current = [];
   };
-  function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    paths.forEach(path => {
-        ctx.strokeStyle = path.color;
-        ctx.lineWidth = path.size;
-
-        ctx.beginPath();
-        ctx.moveTo(path.points[0].x, path.points[0].y);
-
-        path.points.forEach(point => {
-            ctx.lineTo(point.x, point.y);
-        });
-
-        ctx.stroke();
-    });
-}
-function redo(){
-  if(undoPaths.length>0){
-    const restored=undoPaths.pop();
-    paths.push(restored);
-    redraw();
-  }
-}
-function undo(){
-  if(paths.length>0){
-    const removed=paths.pop();
-    undoPaths.push(removed);
-    redraw();
-  }
-}
 
   return (
     <>
@@ -113,8 +162,8 @@ function undo(){
           <input
             type="color"
             value={color}
-            onChange={(e) => setColor(e.target.value)}
             disabled={isEraser}
+            onChange={(e) => setColor(e.target.value)}
           />
         </label>
 
@@ -125,16 +174,16 @@ function undo(){
             min="1"
             max="40"
             value={size}
-            onChange={(e) => setSize(e.target.value)}
+            onChange={(e) => setSize(Number(e.target.value))}
           />
         </label>
 
-        <button
-          onClick={() => setIsEraser(!isEraser)}
-          style={{ padding: "6px 12px" }}
-        >
+        <button onClick={() => setIsEraser(!isEraser)}>
           {isEraser ? "Switch to Brush" : "Use Eraser"}
         </button>
+
+        <button onClick={undo}>Undo</button>
+        <button onClick={redo}>Redo</button>
 
         <button onClick={clearCanvas}>Clear</button>
       </div>
@@ -142,12 +191,15 @@ function undo(){
       {/* Canvas */}
       <canvas
         ref={canvasRef}
-        style={{ display: "block", cursor: isEraser ? "cell" : "crosshair" }}
+        style={{
+          display: "block",
+          cursor: isEraser ? "cell" : "crosshair",
+        }}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-      ></canvas>
+      />
     </>
   );
 }
