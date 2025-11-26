@@ -106,6 +106,15 @@ export default function SketchApp() {
       ctx.stroke();
     });
   };
+  //save 
+  const saveImage=()=>{
+    const canvas=canvasRef.current;
+    const imageURL=canvas.toDataURL("image/png");
+    const link=document.createElement("a");
+    link.href=imageURL;
+    link.download="skecth.png";
+    link.click();
+  };
 
   // Undo
   const undo = () => {
@@ -186,6 +195,7 @@ export default function SketchApp() {
         <button onClick={redo}>Redo</button>
 
         <button onClick={clearCanvas}>Clear</button>
+        <button onClick={saveImage}>Save Image</button>
       </div>
 
       {/* Canvas */}
