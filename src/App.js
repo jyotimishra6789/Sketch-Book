@@ -29,7 +29,7 @@ export default function App() {
         }}
       >
         <img
-          src="/loader.gif"
+          src="https://media.tenor.com/3rLdVGILFeIAAAAi/drawing-sketch.gif"
           alt="loading animation"
           style={{ width: "120px", marginBottom: "15px" }}
         />
