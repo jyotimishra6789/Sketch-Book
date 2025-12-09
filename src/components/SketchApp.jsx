@@ -157,6 +157,8 @@ export default function SketchApp() {
     pathsRef.current.push(restored);
 
     redraw();
+    saveToLocalStorage();
+    
   };
 
   // Clear Canvas
