@@ -146,6 +146,7 @@ export default function SketchApp() {
     undoRef.current.push(removed);
 
     redraw();
+    saveToLocalStorage();
   };
 
   // Redo
