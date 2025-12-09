@@ -16,18 +16,40 @@ export default function SketchApp() {
 
   // Current path while drawing
   const currentPath = useRef(null);
-   const saveToLocalStorage=()=>{
-      try{
-        const data=JSON.stringify(pathsRef.current);
-        localStorage.setItem("sketch_paths",data);
-      }
-      catch(e){
-        console.error("failed to save sketch",e);
-      }
+
+  // Save paths to localStorage
+  const saveToLocalStorage = () => {
+    try {
+      const data = JSON.stringify(pathsRef.current);
+      localStorage.setItem("sketch_paths", data);
+    } catch (e) {
+      console.error("Failed to save sketch", e);
     }
+  };
 
+  // Redraw entire canvas
+  const redraw = () => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
 
-  // Initialize canvas
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    pathsRef.current.forEach((path) => {
+      if (!path.points || path.points.length === 0) return;
+
+      ctx.strokeStyle = path.color;
+      ctx.lineWidth = path.size;
+
+      ctx.beginPath();
+      ctx.moveTo(path.points[0].x, path.points[0].y);
+
+      path.points.forEach((p) => ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+    });
+  };
+
+  // Initialize canvas + load saved data
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
@@ -40,22 +62,25 @@ export default function SketchApp() {
     // White background
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     ctxRef.current = ctx;
-     }, []);
-     try{
-      const saved=localStorage.getItem("sketch_paths");
-      if(saved){
-        const parsed=JSON.parse(saved);
-        if(Array.idArray(parsed)){
-          pathsRef.current=parsed;
+
+    // Load saved sketch
+    try {
+      const saved = localStorage.getItem("sketch_paths");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          pathsRef.current = parsed;
           redraw();
         }
       }
-     }catch(e){
-      console.error("falied to load Sketch",e);
-     }
+    } catch (e) {
+      console.error("Failed to load sketch", e);
+    }
+  }, []);
 
-  // Brush / Eraser settings updated
+  // Update brush settings
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = isEraser ? "white" : color;
@@ -63,14 +88,13 @@ export default function SketchApp() {
     }
   }, [color, size, isEraser]);
 
-  // Start Drawing
+  // Start drawing
   const startDrawing = (e) => {
     setIsDrawing(true);
 
     const x = e.clientX;
     const y = e.clientY;
 
-    // New path object
     currentPath.current = {
       color: isEraser ? "white" : color,
       size: size,
@@ -94,48 +118,17 @@ export default function SketchApp() {
     ctxRef.current.stroke();
   };
 
-  // Stop Drawing
+  // Stop drawing
   const stopDrawing = () => {
     if (!isDrawing) return;
 
     setIsDrawing(false);
     ctxRef.current.closePath();
 
-    // Save finished path
     pathsRef.current.push(currentPath.current);
-
-    // After new path → redo stack clear
     undoRef.current = [];
+
     saveToLocalStorage();
-  };
-
-  // Redraw entire canvas
-  const redraw = () => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    pathsRef.current.forEach((path) => {
-      ctx.strokeStyle = path.color;
-      ctx.lineWidth = path.size;
-
-      ctx.beginPath();
-      ctx.moveTo(path.points[0].x, path.points[0].y);
-
-      path.points.forEach((p) => ctx.lineTo(p.x, p.y));
-      ctx.stroke();
-    });
-  };
-  //save 
-  const saveImage=()=>{
-    const canvas=canvasRef.current;
-    const imageURL=canvas.toDataURL("image/png");
-    const link=document.createElement("a");
-    link.href=imageURL;
-    link.download="skecth.png";
-    link.click();
   };
 
   // Undo
@@ -158,21 +151,31 @@ export default function SketchApp() {
 
     redraw();
     saveToLocalStorage();
-
   };
 
   // Clear Canvas
   const clearCanvas = () => {
-    const canvas = canvasRef.current;
     const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
 
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     pathsRef.current = [];
     undoRef.current = [];
+
     saveToLocalStorage();
-    
+  };
+
+  // Save as Image
+  const saveImage = () => {
+    const canvas = canvasRef.current;
+    const imageURL = canvas.toDataURL("image/png");
+
+    const link = document.createElement("a");
+    link.href = imageURL;
+    link.download = "sketch.png";
+    link.click();
   };
 
   return (
