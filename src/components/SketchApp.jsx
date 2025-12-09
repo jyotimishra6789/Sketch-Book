@@ -16,6 +16,16 @@ export default function SketchApp() {
 
   // Current path while drawing
   const currentPath = useRef(null);
+   const saveToLocalStorage=()=>{
+      try{
+        const data=JSON.stringify(pathsRef.current);
+        localStorage.setItem("sketch_paths",data);
+      }
+      catch(e){
+        console.error("failed to save sketch",e);
+      }
+    }
+
 
   // Initialize canvas
   useEffect(() => {
@@ -30,9 +40,8 @@ export default function SketchApp() {
     // White background
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctxRef.current = ctx;
-  }, []);
+     }, []);
 
   // Brush / Eraser settings updated
   useEffect(() => {
