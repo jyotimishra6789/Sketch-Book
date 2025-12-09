@@ -42,6 +42,18 @@ export default function SketchApp() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctxRef.current = ctx;
      }, []);
+     try{
+      const saved=localStorage.getItem("sketch_paths");
+      if(saved){
+        const parsed=JSON.parse(saved);
+        if(Array.idArray(parsed)){
+          pathsRef.current=parsed;
+          redraw();
+        }
+      }
+     }catch(e){
+      console.error("falied to load Sketch",e);
+     }
 
   // Brush / Eraser settings updated
   useEffect(() => {
