@@ -106,6 +106,7 @@ export default function SketchApp() {
 
     // After new path → redo stack clear
     undoRef.current = [];
+    saveToLocalStorage();
   };
 
   // Redraw entire canvas
