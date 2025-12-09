@@ -1,44 +1,40 @@
-# 🎨 React Sketch App
+🎨 React Sketch App
 
-A simple and smooth drawing/sketching application built using **React**, **Canvas API**, and modern hooks like `useRef`, `useState`, and `useEffect`.
+A smooth drawing/sketching app built using React + Canvas API.
 
-This project helps understand:
-- Canvas drawing in React  
-- Managing drawing state  
-- Eraser logic  
-- Undo & Redo implementation  
-- Brush controls  
-- Clean UI with dynamic cursor  
+🚀 Features
+✔ Draw on Canvas
 
----
+Smooth free-drawing using rounded strokes.
 
-## 🚀 Features
+✔ Brush Controls
 
-### ✔ 1. Draw on Canvas
-Use your mouse to draw freely.  
-Brush is smooth with `lineCap = round`.
+Color picker 🎨
 
----
+Brush size slider (1–40px)
 
-### ✔ 2. Brush Controls  
-- **Color Picker** – Choose any color  
-- **Brush Size Slider** – From 1px to 40px  
-- Live updates using React state  
+✔ Eraser Tool
 
----
+Switch between Brush ↔ Eraser.
+Eraser works by drawing with white color + changes the cursor.
 
-### ✔ 3. Eraser Tool  
-Toggle between Brush and Eraser.
+✔ Undo / Redo
 
-Eraser works by:
-- Setting stroke color to **white**  
-- Cursor changes to **cell** icon automatically  
+Each stroke is saved as a path.
 
----
+Undo removes last stroke
 
-### ✔ 4. Undo / Redo  
-Each drawing stroke is stored as a **path object**.
+Redo restores it
+Canvas fully redraws from the saved paths.
 
-- **Undo** removes last stroke  
-- **Redo** restores the removed stroke  
-- Canvas is completely redrawn from path history on every undo/redo 
+✔ Auto-Save
+
+Your entire sketch is automatically saved to localStorage after every stroke, undo, redo, or clear.
+
+✔ Auto-Load
+
+When the app opens, it restores your last sketch from localStorage.
+
+✔ Save as Image
+
+Export your drawing as a PNG using one button.
