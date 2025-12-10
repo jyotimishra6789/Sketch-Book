@@ -17,7 +17,7 @@ export default function SketchApp() {
   // Current path while drawing
   const currentPath = useRef(null);
 
-  // Save paths to localStorage
+  
   const saveToLocalStorage = () => {
     try {
       const data = JSON.stringify(pathsRef.current);
@@ -27,7 +27,7 @@ export default function SketchApp() {
     }
   };
 
-  // Redraw entire canvas
+  
   const redraw = () => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -49,7 +49,7 @@ export default function SketchApp() {
     });
   };
 
-  // Initialize canvas + load saved data
+  
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
