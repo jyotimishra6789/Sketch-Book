@@ -131,7 +131,7 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // Undo
+  
   const undo = () => {
     if (pathsRef.current.length === 0) return;
 
@@ -142,7 +142,7 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // Redo
+  
   const redo = () => {
     if (undoRef.current.length === 0) return;
 
