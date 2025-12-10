@@ -10,11 +10,11 @@ export default function SketchApp() {
   const [isEraser, setIsEraser] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Paths storage (NOT state — useRef to avoid rerenders)
+  
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
 
-  // Current path while drawing
+  
   const currentPath = useRef(null);
 
   
