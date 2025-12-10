@@ -80,7 +80,7 @@ export default function SketchApp() {
     }
   }, []);
 
-  // Update brush settings
+  
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = isEraser ? "white" : color;
@@ -88,7 +88,7 @@ export default function SketchApp() {
     }
   }, [color, size, isEraser]);
 
-  // Start drawing
+  
   const startDrawing = (e) => {
     setIsDrawing(true);
 
@@ -105,7 +105,7 @@ export default function SketchApp() {
     ctxRef.current.moveTo(x, y);
   };
 
-  // Draw
+  
   const draw = (e) => {
     if (!isDrawing) return;
 
@@ -118,7 +118,7 @@ export default function SketchApp() {
     ctxRef.current.stroke();
   };
 
-  // Stop drawing
+  
   const stopDrawing = () => {
     if (!isDrawing) return;
 
