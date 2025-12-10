@@ -153,7 +153,7 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // Clear Canvas
+  
   const clearCanvas = () => {
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
@@ -167,7 +167,7 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // Save as Image
+  
   const saveImage = () => {
     const canvas = canvasRef.current;
     const imageURL = canvas.toDataURL("image/png");
