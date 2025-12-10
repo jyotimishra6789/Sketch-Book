@@ -4,7 +4,7 @@ export default function SketchApp() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
 
-  // Brush states
+  
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isEraser, setIsEraser] = useState(false);
