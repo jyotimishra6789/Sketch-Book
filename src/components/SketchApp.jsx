@@ -59,13 +59,13 @@ export default function SketchApp() {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // White background
+    
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctxRef.current = ctx;
 
-    // Load saved sketch
+    
     try {
       const saved = localStorage.getItem("sketch_paths");
       if (saved) {
