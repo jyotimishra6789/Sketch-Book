@@ -180,7 +180,7 @@ export default function SketchApp() {
 
   return (
     <>
-      {/* Controls */}
+    
       <div
         style={{
           position: "fixed",
@@ -228,7 +228,7 @@ export default function SketchApp() {
         <button onClick={saveImage}>Save Image</button>
       </div>
 
-      {/* Canvas */}
+      
       <canvas
         ref={canvasRef}
         style={{
