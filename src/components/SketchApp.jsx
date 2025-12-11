@@ -44,7 +44,7 @@ export default function SketchApp() {
   pathsRef.current.push(currentPath.current);
   undoRef.current=[];
   saveToLocalStorage();
- }
+ };
   
   const saveToLocalStorage = () => {
     try {
@@ -267,6 +267,8 @@ export default function SketchApp() {
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
+        onTouchStart={startTouch}
+        
       />
     </>
   );
