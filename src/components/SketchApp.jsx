@@ -4,34 +4,24 @@ export default function SketchApp() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
 
-  // Brush configuration
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isEraser, setIsEraser] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Path history
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
-
-  // Current path being drawn
   const currentPath = useRef(null);
 
-  // --------------------------
-  // Save to LocalStorage
-  // --------------------------
   const saveToLocalStorage = () => {
     try {
       const data = JSON.stringify(pathsRef.current);
       localStorage.setItem("sketch_paths", data);
     } catch (e) {
-      console.error("Failed to save sketch", e);
+      console.error(e);
     }
   };
 
-  // --------------------------
-  // Redraw canvas from stored paths
-  // --------------------------
   const redraw = () => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -53,9 +43,6 @@ export default function SketchApp() {
     });
   };
 
-  // --------------------------
-  // Initialize canvas + load saved sketch
-  // --------------------------
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
@@ -70,7 +57,6 @@ export default function SketchApp() {
 
     ctxRef.current = ctx;
 
-    // Load saved sketch
     try {
       const saved = localStorage.getItem("sketch_paths");
       if (saved) {
@@ -81,13 +67,10 @@ export default function SketchApp() {
         }
       }
     } catch (e) {
-      console.error("Failed to load sketch", e);
+      console.error(e);
     }
   }, []);
 
-  // --------------------------
-  // Sync brush settings
-  // --------------------------
   useEffect(() => {
     if (ctxRef.current) {
       ctxRef.current.strokeStyle = isEraser ? "white" : color;
@@ -95,9 +78,6 @@ export default function SketchApp() {
     }
   }, [color, size, isEraser]);
 
-  // --------------------------
-  // MOUSE Drawing Events
-  // --------------------------
   const startDrawing = (e) => {
     setIsDrawing(true);
 
@@ -106,7 +86,7 @@ export default function SketchApp() {
 
     currentPath.current = {
       color: isEraser ? "white" : color,
-      size: size,
+      size,
       points: [{ x, y }],
     };
 
@@ -121,6 +101,7 @@ export default function SketchApp() {
     const y = e.clientY;
 
     currentPath.current.points.push({ x, y });
+
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
   };
@@ -137,9 +118,6 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // --------------------------
-  // TOUCH Drawing Events (Mobile)
-  // --------------------------
   const startTouch = (e) => {
     e.preventDefault();
 
@@ -150,7 +128,7 @@ export default function SketchApp() {
 
     currentPath.current = {
       color: isEraser ? "white" : color,
-      size: size,
+      size,
       points: [{ x, y }],
     };
 
@@ -183,9 +161,6 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // --------------------------
-  // Undo / Redo / Clear
-  // --------------------------
   const undo = () => {
     if (pathsRef.current.length === 0) return;
 
@@ -219,9 +194,6 @@ export default function SketchApp() {
     saveToLocalStorage();
   };
 
-  // --------------------------
-  // Save Image
-  // --------------------------
   const saveImage = () => {
     const canvas = canvasRef.current;
     const imageURL = canvas.toDataURL("image/png");
@@ -234,7 +206,6 @@ export default function SketchApp() {
 
   return (
     <>
-      {/* Controls */}
       <div
         style={{
           position: "fixed",
@@ -254,8 +225,8 @@ export default function SketchApp() {
           Brush Color:{" "}
           <input
             type="color"
-            disabled={isEraser}
             value={color}
+            disabled={isEraser}
             onChange={(e) => setColor(e.target.value)}
           />
         </label>
@@ -282,21 +253,16 @@ export default function SketchApp() {
         <button onClick={saveImage}>Save Image</button>
       </div>
 
-      {/* Canvas */}
       <canvas
         ref={canvasRef}
         style={{
           display: "block",
           cursor: isEraser ? "cell" : "crosshair",
         }}
-
-        // MOUSE EVENTS
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-
-        // TOUCH EVENTS (Mobile / Tablet)
         onTouchStart={startTouch}
         onTouchMove={moveTouch}
         onTouchEnd={endTouch}
