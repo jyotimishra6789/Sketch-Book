@@ -16,7 +16,19 @@ export default function SketchApp() {
 
   
   const currentPath = useRef(null);
-
+ const startTouch=(e)=>{
+  e.preventDefault();
+  const x=e.touches[0].clientX;
+  const y=e.touches[0].clientY;
+  setIsDrawing(true);
+  currentPath.current={
+    color:isEraser? "white" : color,
+    size:size,
+    points:[{x,y}],
+  };
+  ctxRef.current.beginPath();
+  ctxRef.current.moveTo(x,y);
+ }
   
   const saveToLocalStorage = () => {
     try {
