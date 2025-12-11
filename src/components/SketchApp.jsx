@@ -37,6 +37,14 @@ export default function SketchApp() {
   ctxRef.current.lineTo(x,y);
   ctxRef.current.stroke();
  }
+ const endTouch=()=>{
+  if(!isDrawing) return;
+  setIsDrawing(false);
+  ctxRef.current.closePath();
+  pathsRef.current.push(currentPath.current);
+  undoRef.current=[];
+  saveToLocalStorage();
+ }
   
   const saveToLocalStorage = () => {
     try {
