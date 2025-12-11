@@ -268,7 +268,8 @@ export default function SketchApp() {
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
         onTouchStart={startTouch}
-        
+        onTochMove={moveTouch}
+        o
       />
     </>
   );
