@@ -28,6 +28,14 @@ export default function SketchApp() {
   };
   ctxRef.current.beginPath();
   ctxRef.current.moveTo(x,y);
+ };
+ const moveTouch=(e)=>{
+  if(!isDrawing) return;
+  const x=e.touches[0].clientX;
+  const y=e.touches[0].clientY;
+  currentPath.current.poins.push({x,y});
+  ctxRef.current.lineTo(x,y);
+  ctxRef.current.stroke();
  }
   
   const saveToLocalStorage = () => {
