@@ -255,7 +255,14 @@ export default function SketchApp() {
           />
         </label>
 
-        <button style={buttonStyle} onClick={() => setIsEraser(!isEraser)}>
+        <button style={buttonStyle} onClick={() => setIsEraser(!isEraser)}  style={{
+    padding: "6px 12px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    background: isEraser ? "#ffdddd" : "#f1f1f1",
+    fontWeight: "600"
+  }}>
           {isEraser ? "Switch to Brush" : "Use Eraser"}
         </button>
 
