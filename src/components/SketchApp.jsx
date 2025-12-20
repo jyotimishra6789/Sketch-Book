@@ -135,6 +135,15 @@ export default function SketchApp() {
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(x, y);
   };
+  const buttonStyle = {
+  padding: "6px 12px",
+  borderRadius: "8px",
+  border: "none",
+  background: "#f1f1f1",
+  cursor: "pointer",
+  fontWeight: "500"
+};
+
 
   const moveTouch = (e) => {
     e.preventDefault();
@@ -246,15 +255,15 @@ export default function SketchApp() {
           />
         </label>
 
-        <button onClick={() => setIsEraser(!isEraser)}>
+        <button style={buttonStyle} onClick={() => setIsEraser(!isEraser)}>
           {isEraser ? "Switch to Brush" : "Use Eraser"}
         </button>
 
-        <button onClick={undo}>Undo</button>
-        <button onClick={redo}>Redo</button>
+        <button style={buttonStyle} onClick={undo}>Undo</button>
+        <button style={buttonStyle} onClick={redo}>Redo</button>
 
-        <button onClick={clearCanvas}>Clear</button>
-        <button onClick={saveImage}>Save Image</button>
+        <button style={buttonStyle} onClick={clearCanvas}>Clear</button>
+        <button style={buttonStyle} onClick={saveImage}>Save Image</button>
       </div>
 
       <canvas
