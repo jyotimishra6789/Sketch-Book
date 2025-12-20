@@ -263,7 +263,7 @@ export default function SketchApp() {
     background: isEraser ? "#ffdddd" : "#f1f1f1",
     fontWeight: "600"
   }}>
-          {isEraser ? "🧽 Eraser" : "🖌️ Brush"}
+          {isEraser ? "🧼 Eraser" : "🖌️ Brush"}
         </button>
 
         <button style={buttonStyle} onClick={undo}>Undo</button>
