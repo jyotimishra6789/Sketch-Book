@@ -255,7 +255,7 @@ export default function SketchApp() {
           />
         </label>
 
-        <button style={buttonStyle} onClick={() => setIsEraser(!isEraser)}  style={{
+        <button  onClick={() => setIsEraser(!isEraser)}  style={{
     padding: "6px 12px",
     borderRadius: "8px",
     border: "none",
