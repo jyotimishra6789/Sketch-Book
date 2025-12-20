@@ -243,29 +243,7 @@ export default function SketchApp() {
           />
          
         </label>
-        <div
-  style={{
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    border: "2px solid #333",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#fff",
-  }}
->
-  <div
-    style={{
-      width: size,
-      height: size,
-      borderRadius: "50%",
-      background: isEraser ? "#ffffff" : color,
-      border: isEraser ? "1px dashed #666" : "none",
-    }}
-  />
-</div>
-
+        
         <label>
           Size:{" "}
           <input
@@ -285,7 +263,7 @@ export default function SketchApp() {
     background: isEraser ? "#ffdddd" : "#f1f1f1",
     fontWeight: "600"
   }}>
-          {isEraser ? "Switch to Brush" : "Use Eraser"}
+          {isEraser ? "🧽 Eraser" : "🖌️ Brush"}
         </button>
 
         <button style={buttonStyle} onClick={undo}>Undo</button>
