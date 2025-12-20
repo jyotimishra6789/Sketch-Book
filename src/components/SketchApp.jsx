@@ -231,15 +231,7 @@ export default function SketchApp() {
             value={color}
             disabled={isEraser}
             onChange={(e) => setColor(e.target.value)}
-          /><div
-  style={{
-    width: "26px",
-    height: "26px",
-    borderRadius: "50%",
-    background: color,
-    border: "2px solid #333"
-  }}
-/>
+          />
 
         </label>
 
