@@ -276,9 +276,10 @@ export default function SketchApp() {
       <canvas
         ref={canvasRef}
         style={{
-          display: "block",
-          cursor: isEraser ? "cell" : "crosshair",
-        }}
+  display: "block",
+  cursor: isEraser ? "cell" : "crosshair",
+  touchAction: "none"
+}}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
