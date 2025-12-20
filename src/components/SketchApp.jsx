@@ -207,20 +207,23 @@ export default function SketchApp() {
   return (
     <>
       <div
-        style={{
-          position: "fixed",
-          top: 20,
-          left: 20,
-          background: "white",
-          padding: "12px 18px",
-          borderRadius: "10px",
-          display: "flex",
-          gap: "10px",
-          alignItems: "center",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
-          zIndex: 10,
-        }}
-      >
+  style={{
+    position: "fixed",
+    top: 20,
+    left: 20,
+    background: "#ffffff",
+    padding: "14px",
+    borderRadius: "14px",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    alignItems: "center",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+    zIndex: 10,
+    maxWidth: "90vw"
+  }}
+>
+
         <label>
           Brush Color:{" "}
           <input
