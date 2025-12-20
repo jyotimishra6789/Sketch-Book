@@ -241,8 +241,30 @@ export default function SketchApp() {
             disabled={isEraser}
             onChange={(e) => setColor(e.target.value)}
           />
-
+         
         </label>
+        <div
+  style={{
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    border: "2px solid #333",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#fff",
+  }}
+>
+  <div
+    style={{
+      width: size,
+      height: size,
+      borderRadius: "50%",
+      background: isEraser ? "#ffffff" : color,
+      border: isEraser ? "1px dashed #666" : "none",
+    }}
+  />
+</div>
 
         <label>
           Size:{" "}
