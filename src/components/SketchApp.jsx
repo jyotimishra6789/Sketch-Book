@@ -4,6 +4,7 @@ export default function SketchApp() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
 
+  const [theme, setTheme] = useState("light");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isEraser, setIsEraser] = useState(false);
@@ -13,13 +14,27 @@ export default function SketchApp() {
   const undoRef = useRef([]);
   const currentPath = useRef(null);
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  const themeStyles = {
+    light: {
+      background: "#f5f5f5",
+      toolbar: "#ffffff",
+      text: "#000000",
+      button: "#f1f1f1",
+    },
+    dark: {
+      background: "#121212",
+      toolbar: "#1e1e1e",
+      text: "#ffffff",
+      button: "#2a2a2a",
+    },
+  };
+
   const saveToLocalStorage = () => {
-    try {
-      const data = JSON.stringify(pathsRef.current);
-      localStorage.setItem("sketch_paths", data);
-    } catch (e) {
-      console.error(e);
-    }
+    localStorage.setItem("sketch_paths", JSON.stringify(pathsRef.current));
   };
 
   const redraw = () => {
@@ -30,14 +45,11 @@ export default function SketchApp() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     pathsRef.current.forEach((path) => {
-      if (!path.points || path.points.length === 0) return;
-
       ctx.strokeStyle = path.color;
       ctx.lineWidth = path.size;
 
       ctx.beginPath();
       ctx.moveTo(path.points[0].x, path.points[0].y);
-
       path.points.forEach((p) => ctx.lineTo(p.x, p.y));
       ctx.stroke();
     });
@@ -54,20 +66,12 @@ export default function SketchApp() {
 
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctxRef.current = ctx;
 
-    try {
-      const saved = localStorage.getItem("sketch_paths");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          pathsRef.current = parsed;
-          redraw();
-        }
-      }
-    } catch (e) {
-      console.error(e);
+    const saved = localStorage.getItem("sketch_paths");
+    if (saved) {
+      pathsRef.current = JSON.parse(saved);
+      redraw();
     }
   }, []);
 
@@ -78,11 +82,8 @@ export default function SketchApp() {
     }
   }, [color, size, isEraser]);
 
-  const startDrawing = (e) => {
+  const startDrawing = (x, y) => {
     setIsDrawing(true);
-
-    const x = e.clientX;
-    const y = e.clientY;
 
     currentPath.current = {
       color: isEraser ? "white" : color,
@@ -94,14 +95,10 @@ export default function SketchApp() {
     ctxRef.current.moveTo(x, y);
   };
 
-  const draw = (e) => {
+  const draw = (x, y) => {
     if (!isDrawing) return;
 
-    const x = e.clientX;
-    const y = e.clientY;
-
     currentPath.current.points.push({ x, y });
-
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
   };
@@ -114,180 +111,110 @@ export default function SketchApp() {
 
     pathsRef.current.push(currentPath.current);
     undoRef.current = [];
-
-    saveToLocalStorage();
-  };
-
-  const startTouch = (e) => {
-    e.preventDefault();
-
-    const x = e.touches[0].clientX;
-    const y = e.touches[0].clientY;
-
-    setIsDrawing(true);
-
-    currentPath.current = {
-      color: isEraser ? "white" : color,
-      size,
-      points: [{ x, y }],
-    };
-
-    ctxRef.current.beginPath();
-    ctxRef.current.moveTo(x, y);
-  };
-  const buttonStyle = {
-  padding: "6px 12px",
-  borderRadius: "8px",
-  border: "none",
-  background: "#f1f1f1",
-  cursor: "pointer",
-  fontWeight: "500"
-};
-
-
-  const moveTouch = (e) => {
-    e.preventDefault();
-    if (!isDrawing) return;
-
-    const x = e.touches[0].clientX;
-    const y = e.touches[0].clientY;
-
-    currentPath.current.points.push({ x, y });
-
-    ctxRef.current.lineTo(x, y);
-    ctxRef.current.stroke();
-  };
-
-  const endTouch = () => {
-    if (!isDrawing) return;
-
-    setIsDrawing(false);
-    ctxRef.current.closePath();
-
-    pathsRef.current.push(currentPath.current);
-    undoRef.current = [];
-
     saveToLocalStorage();
   };
 
   const undo = () => {
-    if (pathsRef.current.length === 0) return;
-
-    const removed = pathsRef.current.pop();
-    undoRef.current.push(removed);
-
+    if (!pathsRef.current.length) return;
+    undoRef.current.push(pathsRef.current.pop());
     redraw();
     saveToLocalStorage();
   };
 
   const redo = () => {
-    if (undoRef.current.length === 0) return;
-
-    const restored = undoRef.current.pop();
-    pathsRef.current.push(restored);
-
+    if (!undoRef.current.length) return;
+    pathsRef.current.push(undoRef.current.pop());
     redraw();
     saveToLocalStorage();
   };
 
   const clearCanvas = () => {
-    const ctx = ctxRef.current;
-    const canvas = canvasRef.current;
-
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+    ctxRef.current.fillStyle = "white";
+    ctxRef.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     pathsRef.current = [];
     undoRef.current = [];
-
     saveToLocalStorage();
   };
 
   const saveImage = () => {
-    const canvas = canvasRef.current;
-    const imageURL = canvas.toDataURL("image/png");
-
     const link = document.createElement("a");
-    link.href = imageURL;
+    link.href = canvasRef.current.toDataURL("image/png");
     link.download = "sketch.png";
     link.click();
   };
 
   return (
-    <>
+    <div
+      style={{
+        background: themeStyles[theme].background,
+        minHeight: "100vh",
+        color: themeStyles[theme].text,
+      }}
+    >
       <div
-  style={{
-    position: "fixed",
-    top: 20,
-    left: 20,
-    background: "#ffffff",
-    padding: "14px",
-    borderRadius: "14px",
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    alignItems: "center",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-    zIndex: 10,
-    maxWidth: "90vw"
-  }}
->
+        style={{
+          position: "fixed",
+          top: 20,
+          left: 20,
+          background: themeStyles[theme].toolbar,
+          padding: "14px",
+          borderRadius: "14px",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          alignItems: "center",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+          zIndex: 10,
+        }}
+      >
+        <input
+          type="color"
+          value={color}
+          disabled={isEraser}
+          onChange={(e) => setColor(e.target.value)}
+        />
 
-        <label>
-          Brush Color:{" "}
-          <input
-            type="color"
-            value={color}
-            disabled={isEraser}
-            onChange={(e) => setColor(e.target.value)}
-          />
-         
-        </label>
-        
-        <label>
-          Size:{" "}
-          <input
-            type="range"
-            min="1"
-            max="40"
-            value={size}
-            onChange={(e) => setSize(Number(e.target.value))}
-          />
-        </label>
+        <input
+          type="range"
+          min="1"
+          max="40"
+          value={size}
+          onChange={(e) => setSize(Number(e.target.value))}
+        />
 
-        <button  onClick={() => setIsEraser(!isEraser)}  style={{
-    padding: "6px 12px",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    background: isEraser ? "#ffdddd" : "#f1f1f1",
-    fontWeight: "600"
-  }}>
+        <button onClick={() => setIsEraser(!isEraser)}>
           {isEraser ? "🧼 Eraser" : "🖌️ Brush"}
         </button>
 
-        <button style={buttonStyle} onClick={undo}>Undo</button>
-        <button style={buttonStyle} onClick={redo}>Redo</button>
+        <button onClick={undo}>Undo</button>
+        <button onClick={redo}>Redo</button>
+        <button onClick={clearCanvas}>Clear</button>
+        <button onClick={saveImage}>Save</button>
 
-        <button style={buttonStyle} onClick={clearCanvas}>Clear</button>
-        <button style={buttonStyle} onClick={saveImage}>Save Image</button>
+        <button onClick={toggleTheme}>
+          {theme === "light" ? "🌙 Dark" : "🌞 Light"}
+        </button>
       </div>
 
       <canvas
         ref={canvasRef}
         style={{
-  display: "block",
-  cursor: isEraser ? "cell" : "crosshair",
-  touchAction: "none"
-}}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
+          display: "block",
+          cursor: isEraser ? "cell" : "crosshair",
+          touchAction: "none",
+        }}
+        onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
+        onMouseMove={(e) => draw(e.clientX, e.clientY)}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-        onTouchStart={startTouch}
-        onTouchMove={moveTouch}
-        onTouchEnd={endTouch}
+        onTouchStart={(e) =>
+          startDrawing(e.touches[0].clientX, e.touches[0].clientY)
+        }
+        onTouchMove={(e) =>
+          draw(e.touches[0].clientX, e.touches[0].clientY)
+        }
+        onTouchEnd={stopDrawing}
       />
-    </>
+    </div>
   );
 }
