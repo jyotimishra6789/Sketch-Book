@@ -191,9 +191,7 @@ export default function SketchApp() {
         <button onClick={clearCanvas}>Clear</button>
         <button onClick={saveImage}>Save</button>
 
-        <button onClick={toggleTheme}>
-          {theme === "light" ? "🌙 Dark" : "🌞 Light"}
-        </button>
+        
       </div>
 
       <canvas
