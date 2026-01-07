@@ -14,25 +14,7 @@ export default function SketchApp() {
   const undoRef = useRef([]);
   const currentPath = useRef(null);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
-
-  const themeStyles = {
-    light: {
-      background: "#f5f5f5",
-      toolbar: "#ffffff",
-      text: "#000000",
-      button: "#f1f1f1",
-    },
-    dark: {
-      background: "#121212",
-      toolbar: "#1e1e1e",
-      text: "#ffffff",
-      button: "#2a2a2a",
-    },
-  };
-
+ 
   const saveToLocalStorage = () => {
     localStorage.setItem("sketch_paths", JSON.stringify(pathsRef.current));
   };
