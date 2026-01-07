@@ -81,7 +81,7 @@ export default function SketchApp() {
     }
 
     if (tool === "eraser") {
-      ctx.strokeStyle = "white";
+      ctx.strokeStyle = "#ffffff"; // 🔒 ALWAYS WHITE
       ctx.lineWidth = size * 1.2;
       ctx.lineCap = "round";
     }
@@ -91,12 +91,16 @@ export default function SketchApp() {
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
 
-    // 🪣 Paint Tool
+    // 🪣 Paint Tool → full background fill
     if (tool === "paint") {
       ctx.fillStyle = color;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      pathsRef.current.push({ type: "fill", color });
+      pathsRef.current.push({
+        type: "fill",
+        color,
+      });
+
       saveToLocalStorage();
       return;
     }
@@ -106,7 +110,7 @@ export default function SketchApp() {
     currentPath.current = {
       type: "draw",
       tool,
-      color: tool === "eraser" ? "white" : color,
+      color: tool === "eraser" ? "#ffffff" : color, // 🔒 eraser locked to white
       size,
       points: [{ x, y }],
     };
@@ -171,7 +175,7 @@ export default function SketchApp() {
           position: "fixed",
           top: 20,
           left: 20,
-          background: "#fff",
+          background: "#ffffff",
           padding: "14px",
           borderRadius: "14px",
           display: "flex",
@@ -181,7 +185,12 @@ export default function SketchApp() {
           zIndex: 10,
         }}
       >
-        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+        <input
+          type="color"
+          value={color}
+          disabled={tool === "eraser"}
+          onChange={(e) => setColor(e.target.value)}
+        />
 
         <input
           type="range"
