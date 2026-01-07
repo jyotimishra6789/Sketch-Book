@@ -182,14 +182,14 @@ export default function SketchApp() {
           onChange={(e) => setSize(Number(e.target.value))}
         />
 
-        <button onClick={() => setIsEraser(!isEraser)}>
-          {isEraser ? "🧼 Eraser" : "🖌️ Brush"}
-        </button>
-
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
         <button onClick={clearCanvas}>Clear</button>
         <button onClick={saveImage}>Save</button>
+        <button onClick={() => setTool("paint")}>🪣 Paint</button>
+<button onClick={() => setTool("brush")}>🖌️ Brush</button>
+<button onClick={() => setTool("pencil")}>✏️ Pencil</button>
+
 
         
       </div>
