@@ -200,7 +200,7 @@ export default function SketchApp() {
           onChange={(e) => setSize(Number(e.target.value))}
         />
 
-        <button onClick={() => setTool("paint")}>🪣 Paint</button>
+        <button onClick={() => setTool("paint")}><img src="paint.png" style={{ width: "60px", marginBottom: "15px" }}></img></button>
         <button onClick={() => setTool("brush")}>🖌️ Brush</button>
         <button onClick={() => setTool("pencil")}>✏️ Pencil</button>
         <button onClick={() => setTool("eraser")}>🧽 Eraser</button>
