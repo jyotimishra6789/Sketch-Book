@@ -200,10 +200,10 @@ export default function SketchApp() {
           onChange={(e) => setSize(Number(e.target.value))}
         />
 
-        <button onClick={() => setTool("paint")}><img src="paint.png" style={{ width: "60px", marginBottom: "15px" }}></img></button>
-        <button onClick={() => setTool("brush")}>🖌️ Brush</button>
-        <button onClick={() => setTool("pencil")}>✏️ Pencil</button>
-        <button onClick={() => setTool("eraser")}>🧽 Eraser</button>
+        <button onClick={() => setTool("paint")} style={{ background: "none", border: "none", padding: 0 }}><img src="paint.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
+        <button onClick={() => setTool("brush")} style={{ background: "none", border: "none", padding: 0 }}><img src="brush.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
+        <button onClick={() => setTool("pencil")} style={{ background: "none", border: "none", padding: 0 }}><img src="pencil.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
+        <button onClick={() => setTool("eraser")} style={{ background: "none", border: "none", padding: 0 }}><img src="eraser.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
 
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
