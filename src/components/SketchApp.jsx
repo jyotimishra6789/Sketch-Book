@@ -4,8 +4,7 @@ export default function SketchApp() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
 
-  const [theme, setTheme] = useState("light");
-  const [tool, setTool] = useState("brush"); // paint | brush | pencil
+  const [tool, setTool] = useState("brush"); // paint | brush | pencil | eraser
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -13,19 +12,6 @@ export default function SketchApp() {
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
   const currentPath = useRef(null);
-
-  const themeStyles = {
-    light: {
-      background: "#f5f5f5",
-      toolbar: "#ffffff",
-      text: "#000000",
-    },
-    dark: {
-      background: "#121212",
-      toolbar: "#1e1e1e",
-      text: "#ffffff",
-    },
-  };
 
   const saveToLocalStorage = () => {
     localStorage.setItem("sketch_paths", JSON.stringify(pathsRef.current));
@@ -80,13 +66,23 @@ export default function SketchApp() {
     const ctx = ctxRef.current;
     if (!ctx) return;
 
-    ctx.strokeStyle = color;
+    ctx.globalAlpha = 1;
 
     if (tool === "pencil") {
+      ctx.strokeStyle = color;
       ctx.lineWidth = size * 0.6;
       ctx.lineCap = "butt";
-    } else {
+    }
+
+    if (tool === "brush") {
+      ctx.strokeStyle = color;
       ctx.lineWidth = size;
+      ctx.lineCap = "round";
+    }
+
+    if (tool === "eraser") {
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = size * 1.2;
       ctx.lineCap = "round";
     }
   }, [tool, color, size]);
@@ -110,7 +106,7 @@ export default function SketchApp() {
     currentPath.current = {
       type: "draw",
       tool,
-      color,
+      color: tool === "eraser" ? "white" : color,
       size,
       points: [{ x, y }],
     };
@@ -169,19 +165,13 @@ export default function SketchApp() {
   };
 
   return (
-    <div
-      style={{
-        background: themeStyles[theme].background,
-        minHeight: "100vh",
-        color: themeStyles[theme].text,
-      }}
-    >
+    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
       <div
         style={{
           position: "fixed",
           top: 20,
           left: 20,
-          background: themeStyles[theme].toolbar,
+          background: "#fff",
           padding: "14px",
           borderRadius: "14px",
           display: "flex",
@@ -204,6 +194,7 @@ export default function SketchApp() {
         <button onClick={() => setTool("paint")}>🪣 Paint</button>
         <button onClick={() => setTool("brush")}>🖌️ Brush</button>
         <button onClick={() => setTool("pencil")}>✏️ Pencil</button>
+        <button onClick={() => setTool("eraser")}>🧽 Eraser</button>
 
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
@@ -215,7 +206,12 @@ export default function SketchApp() {
         ref={canvasRef}
         style={{
           display: "block",
-          cursor: tool === "paint" ? "pointer" : "crosshair",
+          cursor:
+            tool === "paint"
+              ? "pointer"
+              : tool === "eraser"
+              ? "cell"
+              : "crosshair",
           touchAction: "none",
         }}
         onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
