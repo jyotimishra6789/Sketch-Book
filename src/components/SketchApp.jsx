@@ -5,16 +5,28 @@ export default function SketchApp() {
   const ctxRef = useRef(null);
 
   const [theme, setTheme] = useState("light");
+  const [tool, setTool] = useState("brush"); // paint | brush | pencil
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
-  const [isEraser, setIsEraser] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
   const currentPath = useRef(null);
 
- 
+  const themeStyles = {
+    light: {
+      background: "#f5f5f5",
+      toolbar: "#ffffff",
+      text: "#000000",
+    },
+    dark: {
+      background: "#121212",
+      toolbar: "#1e1e1e",
+      text: "#ffffff",
+    },
+  };
+
   const saveToLocalStorage = () => {
     localStorage.setItem("sketch_paths", JSON.stringify(pathsRef.current));
   };
@@ -26,13 +38,20 @@ export default function SketchApp() {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    pathsRef.current.forEach((path) => {
-      ctx.strokeStyle = path.color;
-      ctx.lineWidth = path.size;
+    pathsRef.current.forEach((item) => {
+      if (item.type === "fill") {
+        ctx.fillStyle = item.color;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      ctx.strokeStyle = item.color;
+      ctx.lineWidth = item.size;
+      ctx.lineCap = item.tool === "pencil" ? "butt" : "round";
 
       ctx.beginPath();
-      ctx.moveTo(path.points[0].x, path.points[0].y);
-      path.points.forEach((p) => ctx.lineTo(p.x, p.y));
+      ctx.moveTo(item.points[0].x, item.points[0].y);
+      item.points.forEach((p) => ctx.lineTo(p.x, p.y));
       ctx.stroke();
     });
   };
@@ -43,8 +62,8 @@ export default function SketchApp() {
     canvas.height = window.innerHeight;
 
     const ctx = canvas.getContext("2d");
-    ctx.lineCap = "round";
     ctx.lineJoin = "round";
+    ctx.lineCap = "round";
 
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -58,27 +77,50 @@ export default function SketchApp() {
   }, []);
 
   useEffect(() => {
-    if (ctxRef.current) {
-      ctxRef.current.strokeStyle = isEraser ? "white" : color;
-      ctxRef.current.lineWidth = size;
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+
+    ctx.strokeStyle = color;
+
+    if (tool === "pencil") {
+      ctx.lineWidth = size * 0.6;
+      ctx.lineCap = "butt";
+    } else {
+      ctx.lineWidth = size;
+      ctx.lineCap = "round";
     }
-  }, [color, size, isEraser]);
+  }, [tool, color, size]);
 
   const startDrawing = (x, y) => {
+    const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
+
+    // 🪣 Paint Tool
+    if (tool === "paint") {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      pathsRef.current.push({ type: "fill", color });
+      saveToLocalStorage();
+      return;
+    }
+
     setIsDrawing(true);
 
     currentPath.current = {
-      color: isEraser ? "white" : color,
+      type: "draw",
+      tool,
+      color,
       size,
       points: [{ x, y }],
     };
 
-    ctxRef.current.beginPath();
-    ctxRef.current.moveTo(x, y);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
   };
 
   const draw = (x, y) => {
-    if (!isDrawing) return;
+    if (!isDrawing || tool === "paint") return;
 
     currentPath.current.points.push({ x, y });
     ctxRef.current.lineTo(x, y);
@@ -111,8 +153,9 @@ export default function SketchApp() {
   };
 
   const clearCanvas = () => {
+    const canvas = canvasRef.current;
     ctxRef.current.fillStyle = "white";
-    ctxRef.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    ctxRef.current.fillRect(0, 0, canvas.width, canvas.height);
     pathsRef.current = [];
     undoRef.current = [];
     saveToLocalStorage();
@@ -142,19 +185,13 @@ export default function SketchApp() {
           padding: "14px",
           borderRadius: "14px",
           display: "flex",
+          gap: "8px",
           flexWrap: "wrap",
-          gap: "10px",
-          alignItems: "center",
           boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
           zIndex: 10,
         }}
       >
-        <input
-          type="color"
-          value={color}
-          disabled={isEraser}
-          onChange={(e) => setColor(e.target.value)}
-        />
+        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
 
         <input
           type="range"
@@ -164,23 +201,21 @@ export default function SketchApp() {
           onChange={(e) => setSize(Number(e.target.value))}
         />
 
+        <button onClick={() => setTool("paint")}>🪣 Paint</button>
+        <button onClick={() => setTool("brush")}>🖌️ Brush</button>
+        <button onClick={() => setTool("pencil")}>✏️ Pencil</button>
+
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
         <button onClick={clearCanvas}>Clear</button>
         <button onClick={saveImage}>Save</button>
-        <button onClick={() => setTool("paint")}>🪣 Paint</button>
-<button onClick={() => setTool("brush")}>🖌️ Brush</button>
-<button onClick={() => setTool("pencil")}>✏️ Pencil</button>
-
-
-        
       </div>
 
       <canvas
         ref={canvasRef}
         style={{
           display: "block",
-          cursor: isEraser ? "cell" : "crosshair",
+          cursor: tool === "paint" ? "pointer" : "crosshair",
           touchAction: "none",
         }}
         onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
