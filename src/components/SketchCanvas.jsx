@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from "react";
+import Toolbar from "./Toolbar";
 
-export default function SketchApp() {
+export default function SketchCanvas() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
 
-  const [tool, setTool] = useState("brush"); // paint | brush | pencil | eraser
+  const [tool, setTool] = useState("brush");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -50,9 +51,9 @@ export default function SketchApp() {
     const ctx = canvas.getContext("2d");
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     ctxRef.current = ctx;
 
     const saved = localStorage.getItem("sketch_paths");
@@ -66,62 +67,44 @@ export default function SketchApp() {
     const ctx = ctxRef.current;
     if (!ctx) return;
 
-    ctx.globalAlpha = 1;
-
-    if (tool === "pencil") {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = size * 0.6;
-      ctx.lineCap = "butt";
-    }
-
-    if (tool === "brush") {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = size;
-      ctx.lineCap = "round";
-    }
-
     if (tool === "eraser") {
-      ctx.strokeStyle = "#ffffff"; // 🔒 ALWAYS WHITE
+      ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = size * 1.2;
-      ctx.lineCap = "round";
+    } else {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = tool === "pencil" ? size * 0.6 : size;
     }
   }, [tool, color, size]);
 
   const startDrawing = (x, y) => {
-    const ctx = ctxRef.current;
-    const canvas = canvasRef.current;
-
-    // 🪣 Paint Tool → full background fill
     if (tool === "paint") {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      pathsRef.current.push({
-        type: "fill",
-        color,
-      });
-
+      ctxRef.current.fillStyle = color;
+      ctxRef.current.fillRect(
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
+      pathsRef.current.push({ type: "fill", color });
       saveToLocalStorage();
       return;
     }
 
     setIsDrawing(true);
-
     currentPath.current = {
       type: "draw",
       tool,
-      color: tool === "eraser" ? "#ffffff" : color, // 🔒 eraser locked to white
+      color: tool === "eraser" ? "#ffffff" : color,
       size,
       points: [{ x, y }],
     };
 
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctxRef.current.beginPath();
+    ctxRef.current.moveTo(x, y);
   };
 
   const draw = (x, y) => {
-    if (!isDrawing || tool === "paint") return;
-
+    if (!isDrawing) return;
     currentPath.current.points.push({ x, y });
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
@@ -129,10 +112,8 @@ export default function SketchApp() {
 
   const stopDrawing = () => {
     if (!isDrawing) return;
-
     setIsDrawing(false);
     ctxRef.current.closePath();
-
     pathsRef.current.push(currentPath.current);
     undoRef.current = [];
     saveToLocalStorage();
@@ -142,20 +123,22 @@ export default function SketchApp() {
     if (!pathsRef.current.length) return;
     undoRef.current.push(pathsRef.current.pop());
     redraw();
-    saveToLocalStorage();
   };
 
   const redo = () => {
     if (!undoRef.current.length) return;
     pathsRef.current.push(undoRef.current.pop());
     redraw();
-    saveToLocalStorage();
   };
 
   const clearCanvas = () => {
-    const canvas = canvasRef.current;
     ctxRef.current.fillStyle = "white";
-    ctxRef.current.fillRect(0, 0, canvas.width, canvas.height);
+    ctxRef.current.fillRect(
+      0,
+      0,
+      canvasRef.current.width,
+      canvasRef.current.height
+    );
     pathsRef.current = [];
     undoRef.current = [];
     saveToLocalStorage();
@@ -169,60 +152,23 @@ export default function SketchApp() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-      <div
-        style={{
-          position: "fixed",
-          top: 20,
-          left: 20,
-          background: "#ffffff",
-          padding: "14px",
-          borderRadius: "14px",
-          display: "flex",
-          gap: "8px",
-          flexWrap: "wrap",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-          zIndex: 10,
-        }}
-      >
-        <input
-          type="color"
-          value={color}
-          disabled={tool === "eraser"}
-          onChange={(e) => setColor(e.target.value)}
-        />
-
-        <input
-          type="range"
-          min="1"
-          max="40"
-          value={size}
-          onChange={(e) => setSize(Number(e.target.value))}
-        />
-
-        <button onClick={() => setTool("paint")} style={{ background: "none", border: "none", padding: 0 }}><img src="paint.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
-        <button onClick={() => setTool("brush")} style={{ background: "none", border: "none", padding: 0 }}><img src="brush.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
-        <button onClick={() => setTool("pencil")} style={{ background: "none", border: "none", padding: 0 }}><img src="pencil.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
-        <button onClick={() => setTool("eraser")} style={{ background: "none", border: "none", padding: 0 }}><img src="eraser.png" style={{ width: "30px", marginBottom: "15px" }}></img></button>
-
-        <button onClick={undo}>Undo</button>
-        <button onClick={redo}>Redo</button>
-        <button onClick={clearCanvas}>Clear</button>
-        <button onClick={saveImage}>Save</button>
-      </div>
+    <>
+      <Toolbar
+        tool={tool}
+        setTool={setTool}
+        color={color}
+        setColor={setColor}
+        size={size}
+        setSize={setSize}
+        undo={undo}
+        redo={redo}
+        clearCanvas={clearCanvas}
+        saveImage={saveImage}
+      />
 
       <canvas
         ref={canvasRef}
-        style={{
-          display: "block",
-          cursor:
-            tool === "paint"
-              ? "pointer"
-              : tool === "eraser"
-              ? "cell"
-              : "crosshair",
-          touchAction: "none",
-        }}
+        style={{ display: "block", touchAction: "none" }}
         onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
         onMouseMove={(e) => draw(e.clientX, e.clientY)}
         onMouseUp={stopDrawing}
@@ -235,6 +181,6 @@ export default function SketchApp() {
         }
         onTouchEnd={stopDrawing}
       />
-    </div>
+    </>
   );
 }
