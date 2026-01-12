@@ -26,12 +26,22 @@ export default function SketchCanvas() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     pathsRef.current.forEach((item) => {
+      // 🎨 Fill
       if (item.type === "fill") {
         ctx.fillStyle = item.color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         return;
       }
 
+      // ✏️ Text
+      if (item.type === "text") {
+        ctx.fillStyle = item.color;
+        ctx.font = `${item.size}px Arial`;
+        ctx.fillText(item.text, item.x, item.y);
+        return;
+      }
+
+      // ✍️ Draw
       ctx.strokeStyle = item.color;
       ctx.lineWidth = item.size;
       ctx.lineCap = item.tool === "pencil" ? "butt" : "round";
@@ -53,7 +63,6 @@ export default function SketchCanvas() {
     ctx.lineCap = "round";
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctxRef.current = ctx;
 
     const saved = localStorage.getItem("sketch_paths");
@@ -77,9 +86,35 @@ export default function SketchCanvas() {
   }, [tool, color, size]);
 
   const startDrawing = (x, y) => {
+    const ctx = ctxRef.current;
+
+    // 📝 TEXT TOOL
+    if (tool === "text") {
+      const text = prompt("Enter text");
+      if (!text) return;
+
+      const fontSize = size * 4;
+      ctx.fillStyle = color;
+      ctx.font = `${fontSize}px Arial`;
+      ctx.fillText(text, x, y);
+
+      pathsRef.current.push({
+        type: "text",
+        text,
+        x,
+        y,
+        color,
+        size: fontSize,
+      });
+
+      saveToLocalStorage();
+      return;
+    }
+
+    // 🪣 PAINT TOOL
     if (tool === "paint") {
-      ctxRef.current.fillStyle = color;
-      ctxRef.current.fillRect(
+      ctx.fillStyle = color;
+      ctx.fillRect(
         0,
         0,
         canvasRef.current.width,
@@ -90,6 +125,7 @@ export default function SketchCanvas() {
       return;
     }
 
+    // ✍️ DRAW TOOLS
     setIsDrawing(true);
     currentPath.current = {
       type: "draw",
@@ -99,12 +135,12 @@ export default function SketchCanvas() {
       points: [{ x, y }],
     };
 
-    ctxRef.current.beginPath();
-    ctxRef.current.moveTo(x, y);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
   };
 
   const draw = (x, y) => {
-    if (!isDrawing) return;
+    if (!isDrawing || tool === "paint" || tool === "text") return;
     currentPath.current.points.push({ x, y });
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
@@ -123,12 +159,14 @@ export default function SketchCanvas() {
     if (!pathsRef.current.length) return;
     undoRef.current.push(pathsRef.current.pop());
     redraw();
+    saveToLocalStorage();
   };
 
   const redo = () => {
     if (!undoRef.current.length) return;
     pathsRef.current.push(undoRef.current.pop());
     redraw();
+    saveToLocalStorage();
   };
 
   const clearCanvas = () => {
@@ -168,7 +206,18 @@ export default function SketchCanvas() {
 
       <canvas
         ref={canvasRef}
-        style={{ display: "block", touchAction: "none" }}
+        style={{
+          display: "block",
+          touchAction: "none",
+          cursor:
+            tool === "text"
+              ? "text"
+              : tool === "paint"
+              ? "pointer"
+              : tool === "eraser"
+              ? "cell"
+              : "crosshair",
+        }}
         onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
         onMouseMove={(e) => draw(e.clientX, e.clientY)}
         onMouseUp={stopDrawing}
