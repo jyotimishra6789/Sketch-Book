@@ -27,17 +27,30 @@ export default function Toolbar({
         onChange={(e) => setSize(Number(e.target.value))}
       />
 
-      <button onClick={() => setTool("paint")}>Paint</button>
-      <button onClick={() => setTool("brush")}>Brush</button>
-      <button onClick={() => setTool("pencil")}>Pencil</button>
-      <button onClick={() => setTool("eraser")}>Eraser</button>
-      <button onClick={() => setTool("text")}>Text</button>
+      <IconButton icon="paint.png" onClick={() => setTool("paint")} />
+      <IconButton icon="brush.png" onClick={() => setTool("brush")} />
+      <IconButton icon="pencil.png" onClick={() => setTool("pencil")} />
+      <IconButton icon="eraser.png" onClick={() => setTool("eraser")} />
+      <IconButton icon="text.png" onClick={() => setTool("text")}/>
 
       <button onClick={undo}>Undo</button>
       <button onClick={redo}>Redo</button>
       <button onClick={clearCanvas}>Clear</button>
       <button onClick={saveImage}>Save</button>
     </div>
+  );
+}
+
+/* ✅ MISSING COMPONENT — NOW ADDED */
+function IconButton({ icon, onClick }) {
+  return (
+    <button onClick={onClick} style={styles.iconBtn}>
+      <img
+        src={icon}
+        alt=""
+        style={{ width: 30, display: "block" }}
+      />
+    </button>
   );
 }
 
@@ -54,5 +67,11 @@ const styles = {
     flexWrap: "wrap",
     boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
     zIndex: 10,
+  },
+  iconBtn: {
+    background: "none",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
   },
 };
