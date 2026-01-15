@@ -12,7 +12,6 @@ export default function Toolbar({
 }) {
   return (
     <div style={styles.toolbar}>
-      {/* Color & Size */}
       <div style={styles.group}>
         <input
           type="color"
@@ -20,7 +19,6 @@ export default function Toolbar({
           disabled={tool === "eraser"}
           onChange={(e) => setColor(e.target.value)}
         />
-
         <input
           type="range"
           min="1"
@@ -30,7 +28,6 @@ export default function Toolbar({
         />
       </div>
 
-      {/* Tools */}
       <div style={styles.group}>
         <IconButton icon="paint-bucket.png" active={tool === "paint"} onClick={() => setTool("paint")} />
         <IconButton icon="brush.png" active={tool === "brush"} onClick={() => setTool("brush")} />
@@ -39,7 +36,6 @@ export default function Toolbar({
         <IconButton icon="text.png" active={tool === "text"} onClick={() => setTool("text")} />
       </div>
 
-      {/* Actions */}
       <div style={styles.group}>
         <button style={styles.actionBtn} onClick={undo}>Undo</button>
         <button style={styles.actionBtn} onClick={redo}>Redo</button>
@@ -98,7 +94,6 @@ const styles = {
   iconImg: {
     width: 26,
     height: 26,
-    display: "block",
   },
   actionBtn: {
     padding: "6px 12px",
