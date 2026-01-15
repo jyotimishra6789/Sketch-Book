@@ -79,13 +79,11 @@ const styles = {
     boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
     zIndex: 10,
   },
-
   group: {
     display: "flex",
     gap: 8,
     alignItems: "center",
   },
-
   iconBtn: {
     background: "none",
     border: "1px solid transparent",
@@ -93,18 +91,15 @@ const styles = {
     borderRadius: 8,
     cursor: "pointer",
   },
-
   activeIcon: {
     border: "1px solid #4f46e5",
     background: "#eef2ff",
   },
-
   iconImg: {
     width: 26,
     height: 26,
     display: "block",
   },
-
   actionBtn: {
     padding: "6px 12px",
     borderRadius: 8,
