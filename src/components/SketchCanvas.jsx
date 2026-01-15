@@ -9,6 +9,7 @@ export default function SketchCanvas() {
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [textInput, setTextInput] = useState(null);
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
@@ -26,14 +27,12 @@ export default function SketchCanvas() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     pathsRef.current.forEach((item) => {
-      // 🎨 Fill
       if (item.type === "fill") {
         ctx.fillStyle = item.color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         return;
       }
 
-      // ✏️ Text
       if (item.type === "text") {
         ctx.fillStyle = item.color;
         ctx.font = `${item.size}px Arial`;
@@ -41,7 +40,6 @@ export default function SketchCanvas() {
         return;
       }
 
-      // ✍️ Draw
       ctx.strokeStyle = item.color;
       ctx.lineWidth = item.size;
       ctx.lineCap = item.tool === "pencil" ? "butt" : "round";
@@ -72,65 +70,29 @@ export default function SketchCanvas() {
     }
   }, []);
 
-  useEffect(() => {
-    const ctx = ctxRef.current;
-    if (!ctx) return;
-
-    if (tool === "eraser") {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = size * 1.2;
-    } else {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = tool === "pencil" ? size * 0.6 : size;
-    }
-  }, [tool, color, size]);
-
   const startDrawing = (x, y) => {
     const ctx = ctxRef.current;
 
-    // 📝 TEXT TOOL
+    // ✍️ TEXT TOOL (FIGMA STYLE)
     if (tool === "text") {
-      const text = prompt("Enter text");
-      if (!text) return;
-
-      const fontSize = size * 4;
-      ctx.fillStyle = color;
-      ctx.font = `${fontSize}px Arial`;
-      ctx.fillText(text, x, y);
-
-      pathsRef.current.push({
-        type: "text",
-        text,
-        x,
-        y,
-        color,
-        size: fontSize,
-      });
-
-      saveToLocalStorage();
+      setTextInput({ x, y });
       return;
     }
 
-    // 🪣 PAINT TOOL
+    // 🪣 PAINT
     if (tool === "paint") {
       ctx.fillStyle = color;
-      ctx.fillRect(
-        0,
-        0,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
+      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       pathsRef.current.push({ type: "fill", color });
       saveToLocalStorage();
       return;
     }
 
-    // ✍️ DRAW TOOLS
     setIsDrawing(true);
     currentPath.current = {
       type: "draw",
       tool,
-      color: tool === "eraser" ? "#ffffff" : color,
+      color: tool === "eraser" ? "#fff" : color,
       size,
       points: [{ x, y }],
     };
@@ -140,7 +102,7 @@ export default function SketchCanvas() {
   };
 
   const draw = (x, y) => {
-    if (!isDrawing || tool === "paint" || tool === "text") return;
+    if (!isDrawing || textInput) return;
     currentPath.current.points.push({ x, y });
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
@@ -155,42 +117,34 @@ export default function SketchCanvas() {
     saveToLocalStorage();
   };
 
-  const undo = () => {
-    if (!pathsRef.current.length) return;
-    undoRef.current.push(pathsRef.current.pop());
-    redraw();
-    saveToLocalStorage();
-  };
+  const commitText = (value) => {
+    if (!value) {
+      setTextInput(null);
+      return;
+    }
 
-  const redo = () => {
-    if (!undoRef.current.length) return;
-    pathsRef.current.push(undoRef.current.pop());
-    redraw();
-    saveToLocalStorage();
-  };
+    const fontSize = size * 4;
+    const ctx = ctxRef.current;
 
-  const clearCanvas = () => {
-    ctxRef.current.fillStyle = "white";
-    ctxRef.current.fillRect(
-      0,
-      0,
-      canvasRef.current.width,
-      canvasRef.current.height
-    );
-    pathsRef.current = [];
-    undoRef.current = [];
-    saveToLocalStorage();
-  };
+    ctx.fillStyle = color;
+    ctx.font = `${fontSize}px Arial`;
+    ctx.fillText(value, textInput.x, textInput.y);
 
-  const saveImage = () => {
-    const link = document.createElement("a");
-    link.href = canvasRef.current.toDataURL("image/png");
-    link.download = "sketch.png";
-    link.click();
+    pathsRef.current.push({
+      type: "text",
+      text: value,
+      x: textInput.x,
+      y: textInput.y,
+      color,
+      size: fontSize,
+    });
+
+    setTextInput(null);
+    saveToLocalStorage();
   };
 
   return (
-    <>
+    <div style={{ position: "relative" }}>
       <Toolbar
         tool={tool}
         setTool={setTool}
@@ -198,38 +152,75 @@ export default function SketchCanvas() {
         setColor={setColor}
         size={size}
         setSize={setSize}
-        undo={undo}
-        redo={redo}
-        clearCanvas={clearCanvas}
-        saveImage={saveImage}
+        undo={() => {
+          if (!pathsRef.current.length) return;
+          undoRef.current.push(pathsRef.current.pop());
+          redraw();
+        }}
+        redo={() => {
+          if (!undoRef.current.length) return;
+          pathsRef.current.push(undoRef.current.pop());
+          redraw();
+        }}
+        clearCanvas={() => {
+          ctxRef.current.fillStyle = "white";
+          ctxRef.current.fillRect(
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          );
+          pathsRef.current = [];
+          undoRef.current = [];
+          saveToLocalStorage();
+        }}
+        saveImage={() => {
+          const link = document.createElement("a");
+          link.href = canvasRef.current.toDataURL("image/png");
+          link.download = "sketch.png";
+          link.click();
+        }}
       />
+
+      {/* ✨ FIGMA STYLE TEXT INPUT */}
+      {textInput && (
+        <input
+          autoFocus
+          type="text"
+          onBlur={(e) => commitText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && commitText(e.target.value)}
+          onInput={(e) => {
+            e.target.style.width = `${Math.max(1, e.target.value.length)}ch`;
+          }}
+          style={{
+            position: "absolute",
+            left: textInput.x,
+            top: textInput.y - size * 4,
+            fontSize: size * 4,
+            fontFamily: "Arial",
+            color,
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            caretColor: color,
+            width: "1ch",
+            whiteSpace: "nowrap",
+          }}
+        />
+      )}
 
       <canvas
         ref={canvasRef}
         style={{
           display: "block",
+          cursor: tool === "text" ? "text" : "crosshair",
           touchAction: "none",
-          cursor:
-            tool === "text"
-              ? "text"
-              : tool === "paint"
-              ? "pointer"
-              : tool === "eraser"
-              ? "cell"
-              : "crosshair",
         }}
         onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
         onMouseMove={(e) => draw(e.clientX, e.clientY)}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-        onTouchStart={(e) =>
-          startDrawing(e.touches[0].clientX, e.touches[0].clientY)
-        }
-        onTouchMove={(e) =>
-          draw(e.touches[0].clientX, e.touches[0].clientY)
-        }
-        onTouchEnd={stopDrawing}
       />
-    </>
+    </div>
   );
 }
