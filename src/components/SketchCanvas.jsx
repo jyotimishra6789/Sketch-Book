@@ -9,13 +9,14 @@ export default function SketchCanvas() {
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
 
+  // 🔥 TEXT SYSTEM
   const [texts, setTexts] = useState([]);
   const [activeTextId, setActiveTextId] = useState(null);
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
 
-  // ---------------- CANVAS ----------------
+  // ---------------- CANVAS DRAW ----------------
   const redraw = () => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -34,13 +35,13 @@ export default function SketchCanvas() {
       ctx.stroke();
     });
 
-    // draw text
+    // draw texts
     texts.forEach((t) => {
       ctx.fillStyle = t.color;
       ctx.font = `${t.size}px Arial`;
 
       t.value.split("\n").forEach((line, i) => {
-        ctx.fillText(line, t.x, t.y + i * t.size * 1.2);
+        ctx.fillText(line, t.x, t.y + i * t.size * 1.3);
       });
     });
   };
@@ -58,7 +59,7 @@ export default function SketchCanvas() {
     redraw();
   }, [texts]);
 
-  // ---------------- TEXT TOOL ----------------
+  // ---------------- TEXT TOOL CLICK ----------------
   const handleCanvasClick = (x, y) => {
     if (tool !== "text") return;
 
@@ -79,6 +80,7 @@ export default function SketchCanvas() {
     setActiveTextId(id);
   };
 
+  // ---------------- TEXT UPDATE ----------------
   const updateText = (id, value) => {
     setTexts((prev) =>
       prev.map((t) => (t.id === id ? { ...t, value } : t))
@@ -87,6 +89,34 @@ export default function SketchCanvas() {
 
   const stopEditing = () => {
     setActiveTextId(null);
+  };
+
+  // ---------------- DRAWING ----------------
+  const startDrawing = (x, y) => {
+    if (tool === "text") return;
+
+    const path = {
+      color,
+      size,
+      points: [{ x, y }],
+    };
+
+    pathsRef.current.push(path);
+    undoRef.current = [];
+
+    ctxRef.current.beginPath();
+    ctxRef.current.moveTo(x, y);
+  };
+
+  const draw = (x, y) => {
+    if (tool === "text") return;
+
+    const path = pathsRef.current.at(-1);
+    if (!path) return;
+
+    path.points.push({ x, y });
+    ctxRef.current.lineTo(x, y);
+    ctxRef.current.stroke();
   };
 
   return (
@@ -98,11 +128,19 @@ export default function SketchCanvas() {
         setColor={setColor}
         size={size}
         setSize={setSize}
-        undo={() => {}}
-        redo={() => {}}
+        undo={() => {
+          if (!pathsRef.current.length) return;
+          undoRef.current.push(pathsRef.current.pop());
+          redraw();
+        }}
+        redo={() => {
+          if (!undoRef.current.length) return;
+          pathsRef.current.push(undoRef.current.pop());
+          redraw();
+        }}
         clearCanvas={() => {
-          setTexts([]);
           pathsRef.current = [];
+          setTexts([]);
           redraw();
         }}
         saveImage={() => {
@@ -113,7 +151,7 @@ export default function SketchCanvas() {
         }}
       />
 
-      {/* 🔥 FIGMA STYLE TEXT EDITORS */}
+      {/* 🔥 FIGMA STYLE TEXT EDITOR */}
       {texts.map(
         (t) =>
           activeTextId === t.id && (
@@ -135,7 +173,7 @@ export default function SketchCanvas() {
                 outline: "none",
                 resize: "none",
                 padding: 0,
-                lineHeight: "1.2",
+                lineHeight: "1.3",
                 caretColor: t.color,
                 whiteSpace: "pre-wrap",
                 overflow: "hidden",
@@ -150,9 +188,14 @@ export default function SketchCanvas() {
           display: "block",
           cursor: tool === "text" ? "text" : "crosshair",
         }}
-        onMouseDown={(e) =>
-          handleCanvasClick(e.clientX, e.clientY)
-        }
+        onMouseDown={(e) => {
+          if (tool === "text") {
+            handleCanvasClick(e.clientX, e.clientY);
+          } else {
+            startDrawing(e.clientX, e.clientY);
+          }
+        }}
+        onMouseMove={(e) => draw(e.clientX, e.clientY)}
       />
     </div>
   );
