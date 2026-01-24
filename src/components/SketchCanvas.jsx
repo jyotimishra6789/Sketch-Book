@@ -9,7 +9,9 @@ export default function SketchCanvas() {
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
+
   const [textInput, setTextInput] = useState(null);
+  const [liveText, setLiveText] = useState("");
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
@@ -23,9 +25,11 @@ export default function SketchCanvas() {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // draw saved paths
     pathsRef.current.forEach((item) => {
       if (item.type === "fill") {
         ctx.fillStyle = item.color;
@@ -37,7 +41,11 @@ export default function SketchCanvas() {
         ctx.fillStyle = item.color;
         ctx.font = `${item.size}px Arial`;
         item.text.split("\n").forEach((line, i) => {
-          ctx.fillText(line, item.x, item.y + i * item.size * 1.2);
+          ctx.fillText(
+            line,
+            item.x,
+            item.y + i * item.size * 1.2
+          );
         });
         return;
       }
@@ -51,6 +59,21 @@ export default function SketchCanvas() {
       item.points.forEach((p) => ctx.lineTo(p.x, p.y));
       ctx.stroke();
     });
+
+    // 🔥 LIVE TYPING PREVIEW
+    if (textInput && liveText) {
+      const fontSize = size * 4;
+      ctx.fillStyle = color;
+      ctx.font = `${fontSize}px Arial`;
+
+      liveText.split("\n").forEach((line, i) => {
+        ctx.fillText(
+          line,
+          textInput.x,
+          textInput.y + i * fontSize * 1.2
+        );
+      });
+    }
   };
 
   useEffect(() => {
@@ -75,14 +98,22 @@ export default function SketchCanvas() {
   const startDrawing = (x, y) => {
     if (tool === "text") {
       setTextInput({ x, y });
+      setLiveText("");
+      redraw();
       return;
     }
 
     if (tool === "paint") {
       ctxRef.current.fillStyle = color;
-      ctxRef.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctxRef.current.fillRect(
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
       pathsRef.current.push({ type: "fill", color });
       saveToLocalStorage();
+      redraw();
       return;
     }
 
@@ -113,27 +144,30 @@ export default function SketchCanvas() {
     pathsRef.current.push(currentPath.current);
     undoRef.current = [];
     saveToLocalStorage();
+    redraw();
   };
 
-  const commitText = (value) => {
-    if (!value.trim()) {
+  const commitText = () => {
+    if (!liveText.trim()) {
       setTextInput(null);
       return;
     }
 
     const fontSize = size * 4;
+
     pathsRef.current.push({
       type: "text",
-      text: value,
+      text: liveText,
       x: textInput.x,
       y: textInput.y,
       color,
       size: fontSize,
     });
 
-    redraw();
+    setLiveText("");
     setTextInput(null);
     saveToLocalStorage();
+    redraw();
   };
 
   return (
@@ -157,10 +191,16 @@ export default function SketchCanvas() {
         }}
         clearCanvas={() => {
           ctxRef.current.fillStyle = "white";
-          ctxRef.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          ctxRef.current.fillRect(
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          );
           pathsRef.current = [];
           undoRef.current = [];
           saveToLocalStorage();
+          redraw();
         }}
         saveImage={() => {
           const link = document.createElement("a");
@@ -170,12 +210,16 @@ export default function SketchCanvas() {
         }}
       />
 
-      {/* ✨ TRUE FIGMA-STYLE TEXTAREA */}
+      {/* ✨ FIGMA STYLE TEXT EDITOR */}
       {textInput && (
         <textarea
           autoFocus
-          rows={1}
-          onBlur={(e) => commitText(e.target.value)}
+          value={liveText}
+          onChange={(e) => {
+            setLiveText(e.target.value);
+            redraw();
+          }}
+          onBlur={commitText}
           onInput={(e) => {
             e.target.style.height = "auto";
             e.target.style.height = e.target.scrollHeight + "px";
