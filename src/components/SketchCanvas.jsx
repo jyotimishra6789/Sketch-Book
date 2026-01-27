@@ -8,13 +8,13 @@ export default function SketchCanvas() {
   const [tool, setTool] = useState("brush");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
-  const [isDrawing, setIsDrawing] = useState(false);
 
   const [texts, setTexts] = useState([]);
   const [activeTextId, setActiveTextId] = useState(null);
 
   const pathsRef = useRef([]);
 
+  // ================= CANVAS INIT =================
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
@@ -28,6 +28,7 @@ export default function SketchCanvas() {
     redraw();
   }, []);
 
+  // ================= REDRAW =================
   const redraw = () => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -36,33 +37,30 @@ export default function SketchCanvas() {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // strokes
+    // draw paths
     pathsRef.current.forEach((p) => {
       ctx.strokeStyle = p.color;
       ctx.lineWidth = p.size;
-
       ctx.beginPath();
       ctx.moveTo(p.points[0].x, p.points[0].y);
-      p.points.forEach(pt => ctx.lineTo(pt.x, pt.y));
+      p.points.forEach((pt) => ctx.lineTo(pt.x, pt.y));
       ctx.stroke();
     });
 
-    // texts
-    texts.forEach(t => {
+    // draw texts
+    texts.forEach((t) => {
       ctx.fillStyle = t.color;
       ctx.font = `${t.size}px Arial`;
       t.value.split("\n").forEach((line, i) => {
-        ctx.fillText(line, t.x, t.y + i * t.size * 1.2);
+        ctx.fillText(line, t.x, t.y + i * t.size * 1.3);
       });
     });
   };
 
-  // ---------------- DRAW ----------------
-
+  // ================= DRAW =================
   const startDrawing = (x, y) => {
-    if (tool === "text") return;
+    if (tool !== "brush") return;
 
-    setIsDrawing(true);
     pathsRef.current.push({
       color,
       size,
@@ -74,26 +72,25 @@ export default function SketchCanvas() {
   };
 
   const draw = (x, y) => {
-    if (!isDrawing || tool === "text") return;
+    if (tool !== "brush") return;
 
     const path = pathsRef.current.at(-1);
-    path.points.push({ x, y });
+    if (!path) return;
 
+    path.points.push({ x, y });
     ctxRef.current.lineTo(x, y);
     ctxRef.current.stroke();
   };
 
   const stopDrawing = () => {
-    setIsDrawing(false);
     redraw();
   };
 
-  // ---------------- TEXT ----------------
-
+  // ================= TEXT =================
   const handleTextClick = (x, y) => {
     const id = Date.now();
 
-    setTexts(prev => [
+    setTexts((prev) => [
       ...prev,
       {
         id,
@@ -108,6 +105,7 @@ export default function SketchCanvas() {
     setActiveTextId(id);
   };
 
+  // ================= RENDER =================
   return (
     <div style={{ position: "relative" }}>
       <Toolbar
@@ -126,52 +124,64 @@ export default function SketchCanvas() {
         }}
         saveImage={() => {
           const link = document.createElement("a");
-          link.href = canvasRef.current.toDataURL();
+          link.href = canvasRef.current.toDataURL("image/png");
           link.download = "sketch.png";
           link.click();
         }}
       />
 
-      {/* TEXT EDITOR */}
+      {/* ========= TEXT INPUT ========= */}
       {texts.map(
-        t =>
+        (t) =>
           activeTextId === t.id && (
             <textarea
               key={t.id}
               autoFocus
               value={t.value}
               onChange={(e) => {
-                setTexts(prev =>
-                  prev.map(x =>
+                setTexts((prev) =>
+                  prev.map((x) =>
                     x.id === t.id
                       ? { ...x, value: e.target.value }
                       : x
                   )
                 );
               }}
-              onBlur={() => setActiveTextId(null)}
+              onBlur={() => {
+                setActiveTextId(null);
+                redraw();
+              }}
               style={{
                 position: "absolute",
                 left: t.x,
                 top: t.y,
                 fontSize: t.size,
+                fontFamily: "Arial",
                 color: t.color,
                 background: "transparent",
                 border: "none",
                 outline: "none",
                 resize: "none",
+                zIndex: 20,
+                caretColor: t.color,
+                whiteSpace: "pre-wrap",
               }}
             />
           )
       )}
 
+      {/* ========= CANVAS ========= */}
       <canvas
         ref={canvasRef}
         style={{
           display: "block",
           cursor: tool === "text" ? "text" : "crosshair",
+          position: "relative",
+          zIndex: 1,
         }}
         onMouseDown={(e) => {
+          if (activeTextId) return;
+
           if (tool === "text") {
             handleTextClick(e.clientX, e.clientY);
           } else {
