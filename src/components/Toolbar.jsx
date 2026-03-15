@@ -49,6 +49,9 @@ export default function Toolbar({
         <IconButton icon="pencil.png" active={tool === "pencil"} onClick={() => setTool("pencil")} />
         <IconButton icon="eraser.png" active={tool === "eraser"} onClick={() => setTool("eraser")} />
         <IconButton icon="text.png" active={tool === "text"} onClick={() => setTool("text")} />
+        <div style={{ width: 1, height: 24, background: "#ccc", margin: "0 4px" }} />
+        <IconButton icon="rect.png" active={tool === "rect"} onClick={() => setTool("rect")} />
+        <IconButton icon="circle.png" active={tool === "circle"} onClick={() => setTool("circle")} />
       </div>
 
       <div style={styles.group}>
