@@ -61,6 +61,20 @@ export default function SketchCanvas() {
         return;
       }
 
+      // 🟥 shape (rect/circle)
+      if (item.type === "shape") {
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = item.size;
+        ctx.beginPath();
+        if (item.shape === "rect") {
+          ctx.rect(item.x, item.y, item.w, item.h);
+        } else if (item.shape === "circle") {
+          ctx.arc(item.x, item.y, item.r, 0, 2 * Math.PI);
+        }
+        ctx.stroke();
+        return;
+      }
+
       // 🖌 draw
       ctx.strokeStyle = item.color;
       
@@ -112,11 +126,28 @@ export default function SketchCanvas() {
       return;
     }
 
-    // 🖌 DRAW
+    // 🖌 DRAW OR SHAPE
     setIsDrawing(true);
 
     const activeColor = tool === "eraser" ? "white" : color;
 
+    // For shapes, we record the starting point
+    if (tool === "rect" || tool === "circle") {
+      pathsRef.current.push({
+        type: "shape",
+        shape: tool,
+        color: activeColor,
+        size,
+        x,
+        y,
+        w: 0,
+        h: 0,
+        r: 0,
+      });
+      return;
+    }
+
+    // Standard drawing
     pathsRef.current.push({
       type: "draw",
       tool: tool,
@@ -173,6 +204,20 @@ export default function SketchCanvas() {
     if (!isDrawing || tool === "text") return;
 
     const path = pathsRef.current.at(-1);
+
+    // Live preview for shapes
+    if (path.type === "shape") {
+      if (tool === "rect") {
+        path.w = x - path.x;
+        path.h = y - path.y;
+      } else if (tool === "circle") {
+        path.r = Math.sqrt(Math.pow(x - path.x, 2) + Math.pow(y - path.y, 2));
+      }
+      redraw();
+      return;
+    }
+
+    // Standard draw
     path.points.push({ x, y });
 
     ctxRef.current.lineTo(x, y);
