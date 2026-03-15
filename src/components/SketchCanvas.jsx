@@ -9,6 +9,7 @@ export default function SketchCanvas() {
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [textInput, setTextInput] = useState(null);
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
@@ -16,15 +17,22 @@ export default function SketchCanvas() {
   // ================= CANVAS INIT =================
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
 
-    const ctx = canvas.getContext("2d");
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctxRef.current = ctx;
+    const initCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
 
-    redraw();
+      const ctx = canvas.getContext("2d");
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctxRef.current = ctx;
+
+      redraw();
+    };
+
+    initCanvas();
+    window.addEventListener("resize", initCanvas);
+    return () => window.removeEventListener("resize", initCanvas);
   }, []);
 
   // ================= REDRAW =================
@@ -53,7 +61,16 @@ export default function SketchCanvas() {
 
       // 🖌 draw
       ctx.strokeStyle = item.color;
-      ctx.lineWidth = item.size;
+      
+      if (item.tool === "pencil") {
+        ctx.lineCap = "butt";
+        ctx.lineJoin = "miter";
+        ctx.lineWidth = 2; // Fixed pencil size
+      } else {
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = item.size;
+      }
 
       ctx.beginPath();
       ctx.moveTo(item.points[0].x, item.points[0].y);
@@ -68,25 +85,7 @@ export default function SketchCanvas() {
 
     // ✏️ TEXT TOOL (SIMPLE)
     if (tool === "text") {
-      const text = prompt("Enter text");
-      if (!text) return;
-
-      const fontSize = size * 4;
-
-      ctx.fillStyle = color;
-      ctx.font = `${fontSize}px Arial`;
-      ctx.fillText(text, x, y);
-
-      pathsRef.current.push({
-        type: "text",
-        text,
-        x,
-        y,
-        color,
-        size: fontSize,
-      });
-
-      redraw();
+      setTextInput({ x, y, value: "" });
       return;
     }
 
@@ -112,15 +111,56 @@ export default function SketchCanvas() {
     // 🖌 DRAW
     setIsDrawing(true);
 
+    const activeColor = tool === "eraser" ? "white" : color;
+
     pathsRef.current.push({
       type: "draw",
-      color,
+      tool: tool,
+      color: activeColor,
       size,
       points: [{ x, y }],
     });
 
+    ctx.strokeStyle = activeColor;
+    if (tool === "pencil") {
+      ctx.lineCap = "butt";
+      ctx.lineJoin = "miter";
+      ctx.lineWidth = 2;
+    } else {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = size;
+    }
+
     ctx.beginPath();
     ctx.moveTo(x, y);
+  };
+
+  const finalizeText = () => {
+    if (!textInput || !textInput.value.trim()) {
+      setTextInput(null);
+      return;
+    }
+
+    const { x, y, value } = textInput;
+    const fontSize = size * 4;
+    const ctx = ctxRef.current;
+
+    ctx.fillStyle = color;
+    ctx.font = `${fontSize}px Arial`;
+    ctx.fillText(value, x, y);
+
+    pathsRef.current.push({
+      type: "text",
+      text: value,
+      x,
+      y,
+      color,
+      size: fontSize,
+    });
+
+    setTextInput(null);
+    redraw();
   };
 
   const draw = (x, y) => {
@@ -154,9 +194,11 @@ export default function SketchCanvas() {
 
   // ================= CLEAR =================
   const clearCanvas = () => {
-    pathsRef.current = [];
-    undoRef.current = [];
-    redraw();
+    if (window.confirm("Are you sure you want to clear the entire canvas?")) {
+      pathsRef.current = [];
+      undoRef.current = [];
+      redraw();
+    }
   };
 
   // ================= SAVE =================
@@ -186,13 +228,41 @@ export default function SketchCanvas() {
         ref={canvasRef}
         style={{
           display: "block",
+          touchAction: "none",
           cursor: tool === "text" ? "text" : "crosshair",
         }}
         onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
         onMouseMove={(e) => draw(e.clientX, e.clientY)}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
+        onTouchStart={(e) => startDrawing(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchMove={(e) => draw(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchEnd={stopDrawing}
       />
+      {textInput && (
+        <input
+          autoFocus
+          value={textInput.value}
+          onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
+          onBlur={finalizeText}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") finalizeText();
+          }}
+          style={{
+            position: "absolute",
+            left: textInput.x,
+            top: textInput.y - size * 4,
+            fontSize: size * 4,
+            color: color,
+            background: "transparent",
+            border: "1px dashed #ccc",
+            outline: "none",
+            fontFamily: "Arial",
+            margin: 0,
+            padding: 0,
+          }}
+        />
+      )}
     </div>
   );
 }
