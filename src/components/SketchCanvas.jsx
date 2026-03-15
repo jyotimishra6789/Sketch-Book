@@ -86,7 +86,9 @@ export default function SketchCanvas() {
 
     // ✏️ TEXT TOOL (SIMPLE)
     if (tool === "text") {
-      setTextInput({ x, y, value: "" });
+      setTimeout(() => {
+        setTextInput({ x, y, value: "" });
+      }, 50);
       return;
     }
 
@@ -150,13 +152,13 @@ export default function SketchCanvas() {
     ctx.fillStyle = color;
     ctx.textBaseline = "top";
     ctx.font = `${fontSize}px Arial`;
-    ctx.fillText(value, x, y - fontSize);
+    ctx.fillText(value, x, y);
 
     pathsRef.current.push({
       type: "text",
       text: value,
       x,
-      y: y - fontSize,
+      y,
       color,
       size: fontSize,
     });
@@ -250,10 +252,12 @@ export default function SketchCanvas() {
           onKeyDown={(e) => {
             if (e.key === "Enter") finalizeText();
           }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
           style={{
             position: "absolute",
             left: textInput.x,
-            top: textInput.y - size * 4,
+            top: textInput.y,
             fontSize: size * 4,
             color: color,
             background: "transparent",
@@ -262,6 +266,7 @@ export default function SketchCanvas() {
             fontFamily: "Arial",
             margin: 0,
             padding: 0,
+            lineHeight: 1,
           }}
         />
       )}
