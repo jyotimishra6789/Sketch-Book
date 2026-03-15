@@ -5,6 +5,8 @@ export default function Toolbar({
   setColor,
   size,
   setSize,
+  font,
+  setFont,
   undo,
   redo,
   clearCanvas,
@@ -26,6 +28,19 @@ export default function Toolbar({
           value={size}
           onChange={(e) => setSize(Number(e.target.value))}
         />
+        {tool === "text" && (
+          <select 
+            value={font} 
+            onChange={(e) => setFont(e.target.value)}
+            style={styles.fontSelect}
+          >
+            <option value="Arial">Arial</option>
+            <option value="'Courier New', Courier, monospace">Courier</option>
+            <option value="'Times New Roman', Times, serif">Times New</option>
+            <option value="'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">Trebuchet</option>
+            <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans</option>
+          </select>
+        )}
       </div>
 
       <div style={styles.group}>
@@ -102,4 +117,11 @@ const styles = {
     background: "#f9f9f9",
     cursor: "pointer",
   },
+  fontSelect: {
+    padding: "4px 8px",
+    borderRadius: 6,
+    border: "1px solid #ccc",
+    outline: "none",
+    cursor: "pointer",
+  }
 };

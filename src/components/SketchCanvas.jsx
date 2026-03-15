@@ -8,6 +8,7 @@ export default function SketchCanvas() {
   const [tool, setTool] = useState("brush");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
+  const [font, setFont] = useState("Arial");
   const [isDrawing, setIsDrawing] = useState(false);
   const [textInput, setTextInput] = useState(null);
 
@@ -55,7 +56,7 @@ export default function SketchCanvas() {
       if (item.type === "text") {
         ctx.fillStyle = item.color;
         ctx.textBaseline = "top";
-        ctx.font = `${item.size}px Arial`;
+        ctx.font = `${item.size}px ${item.font || "Arial"}`;
         ctx.fillText(item.text, item.x, item.y);
         return;
       }
@@ -151,7 +152,7 @@ export default function SketchCanvas() {
 
     ctx.fillStyle = color;
     ctx.textBaseline = "top";
-    ctx.font = `${fontSize}px Arial`;
+    ctx.font = `${fontSize}px ${font}`;
     ctx.fillText(value, x, y);
 
     pathsRef.current.push({
@@ -161,6 +162,7 @@ export default function SketchCanvas() {
       y,
       color,
       size: fontSize,
+      font,
     });
 
     setTextInput(null);
@@ -222,6 +224,8 @@ export default function SketchCanvas() {
         setColor={setColor}
         size={size}
         setSize={setSize}
+        font={font}
+        setFont={setFont}
         undo={undo}
         redo={redo}
         clearCanvas={clearCanvas}
@@ -263,7 +267,7 @@ export default function SketchCanvas() {
             background: "transparent",
             border: "1px dashed #ccc",
             outline: "none",
-            fontFamily: "Arial",
+            fontFamily: font,
             margin: 0,
             padding: 0,
             lineHeight: 1,
