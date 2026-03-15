@@ -54,6 +54,7 @@ export default function SketchCanvas() {
       // ✏️ text
       if (item.type === "text") {
         ctx.fillStyle = item.color;
+        ctx.textBaseline = "top";
         ctx.font = `${item.size}px Arial`;
         ctx.fillText(item.text, item.x, item.y);
         return;
@@ -147,14 +148,15 @@ export default function SketchCanvas() {
     const ctx = ctxRef.current;
 
     ctx.fillStyle = color;
+    ctx.textBaseline = "top";
     ctx.font = `${fontSize}px Arial`;
-    ctx.fillText(value, x, y);
+    ctx.fillText(value, x, y - fontSize);
 
     pathsRef.current.push({
       type: "text",
       text: value,
       x,
-      y,
+      y: y - fontSize,
       color,
       size: fontSize,
     });
