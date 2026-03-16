@@ -307,6 +307,23 @@ export default function SketchCanvas() {
       const centerY = rect.top + rect.height / 2;
       
       setDraggingText({ id: textId, centerX, centerY, type: "rotate", initialRotation: txt.rotation });
+    } else if (type === "edit") {
+      const txtToEdit = texts.find(t => t.id === textId);
+      if (txtToEdit) {
+        setTextInput({ 
+          id: txtToEdit.id, 
+          x: txtToEdit.x, 
+          y: txtToEdit.y, 
+          value: txtToEdit.text, 
+          color: txtToEdit.color, 
+          font: txtToEdit.font, 
+          size: txtToEdit.size,
+          rotation: txtToEdit.rotation 
+        });
+        
+        // Remove from rendered texts while editing
+        setTexts(prev => prev.filter(t => t.id !== textId));
+      }
     }
   };
 
@@ -528,6 +545,7 @@ export default function SketchCanvas() {
           <div
             key={txt.id}
             onMouseDown={(e) => handleTextInteraction(e, txt.id, "drag")}
+            onDoubleClick={(e) => handleTextInteraction(e, txt.id, "edit")}
             style={{
               position: "absolute",
               left: txt.x,
