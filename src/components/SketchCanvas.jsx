@@ -100,7 +100,13 @@ export default function SketchCanvas() {
   const [font, setFont] = useState("Arial");
   const [fillShape, setFillShape] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // Instead of baking text into the canvas immediately,
+  // we'll keep interactive text elements in a separate state.
+  const [texts, setTexts] = useState([]);
   const [textInput, setTextInput] = useState(null);
+  const [selectedTextId, setSelectedTextId] = useState(null);
+  const [draggingText, setDraggingText] = useState(null);
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
@@ -146,12 +152,17 @@ export default function SketchCanvas() {
         return;
       }
 
-      // ✏️ text
+      // ✏️ text (legacy support for already drawn text)
       if (item.type === "text") {
         ctx.fillStyle = item.color;
         ctx.textBaseline = "top";
         ctx.font = `${item.size}px ${item.font || "Arial"}`;
-        ctx.fillText(item.text, item.x, item.y);
+        
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate((item.rotation || 0) * Math.PI / 180);
+        ctx.fillText(item.text, 0, 0);
+        ctx.restore();
         return;
       }
 
@@ -198,11 +209,25 @@ export default function SketchCanvas() {
   // ================= DRAW =================
   const startDrawing = (x, y) => {
     const ctx = ctxRef.current;
+    
+    // Deselect text if clicking outside of a selected text area
+    if (selectedTextId && tool !== "text") {
+      setSelectedTextId(null);
+    }
 
-    // ✏️ TEXT TOOL (SIMPLE)
+    // ✏️ TEXT TOOL (Create new interactive text)
     if (tool === "text") {
       setTimeout(() => {
-        setTextInput({ x, y, value: "" });
+        setTextInput({ 
+          id: Date.now(), 
+          x, 
+          y, 
+          value: "", 
+          color, 
+          font, 
+          size: size * 4,
+          rotation: 0
+        });
       }, 50);
       return;
     }
@@ -266,33 +291,89 @@ export default function SketchCanvas() {
     ctx.moveTo(x, y);
   };
 
+  const handleTextInteraction = (e, textId, type) => {
+    e.stopPropagation();
+    if (tool !== "text") return;
+
+    if (type === "drag") {
+      setSelectedTextId(textId);
+      setDraggingText({ id: textId, startX: e.clientX, startY: e.clientY, type: "move" });
+    } else if (type === "rotate") {
+      setSelectedTextId(textId);
+      
+      const txt = texts.find(t => t.id === textId);
+      const rect = e.target.closest("div").getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      setDraggingText({ id: textId, centerX, centerY, type: "rotate", initialRotation: txt.rotation });
+    }
+  };
+
+  const handleGlobalMouseMove = (e) => {
+    if (!draggingText) return;
+
+    if (draggingText.type === "move") {
+      const dx = e.clientX - draggingText.startX;
+      const dy = e.clientY - draggingText.startY;
+
+      setTexts(prev => prev.map(t => 
+        t.id === draggingText.id ? { ...t, x: t.x + dx, y: t.y + dy } : t
+      ));
+
+      setDraggingText(prev => ({ ...prev, startX: e.clientX, startY: e.clientY }));
+    } else if (draggingText.type === "rotate") {
+      const { centerX, centerY, initialRotation } = draggingText;
+      
+      // Calculate angle
+      const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+      let degrees = (angle * 180 / Math.PI) + 90; // +90 because rotation handle is usually at top
+      
+      setTexts(prev => prev.map(t => 
+        t.id === draggingText.id ? { ...t, rotation: degrees } : t
+      ));
+    }
+  };
+
+  const handleGlobalMouseUp = () => {
+    setDraggingText(null);
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleGlobalMouseMove);
+    window.addEventListener("mouseup", handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleGlobalMouseMove);
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+    };
+  }, [draggingText]);
+
   const finalizeText = () => {
     if (!textInput || !textInput.value.trim()) {
       setTextInput(null);
       return;
     }
 
-    const { x, y, value } = textInput;
-    const fontSize = size * 4;
-    const ctx = ctxRef.current;
+    const { id, x, y, value, color: txtColor, font: txtFont, size: txtSize, rotation } = textInput;
 
-    ctx.fillStyle = color;
-    ctx.textBaseline = "top";
-    ctx.font = `${fontSize}px ${font}`;
-    ctx.fillText(value, x, y);
+    // We no longer push text directly to pathsRef immediately.
+    // Instead we add it to the interactive `texts` array.
+    setTexts(prev => [
+      ...prev,
+      {
+        id,
+        text: value,
+        x,
+        y,
+        color: txtColor,
+        size: txtSize,
+        font: txtFont,
+        rotation: rotation || 0,
+      }
+    ]);
 
-    pathsRef.current.push({
-      type: "text",
-      text: value,
-      x,
-      y,
-      color,
-      size: fontSize,
-      font,
-    });
-
+    setSelectedTextId(id);
     setTextInput(null);
-    redraw();
   };
 
   const draw = (x, y) => {
@@ -343,16 +424,38 @@ export default function SketchCanvas() {
     if (window.confirm("Are you sure you want to clear the entire canvas?")) {
       pathsRef.current = [];
       undoRef.current = [];
+      setTexts([]);
       redraw();
     }
   };
 
   // ================= SAVE =================
   const saveImage = () => {
+    // Before saving, we need to draw all interactive texts onto the canvas temporarily
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    
+    ctx.save();
+    texts.forEach(txt => {
+      ctx.fillStyle = txt.color;
+      ctx.textBaseline = "top";
+      ctx.font = `${txt.size}px ${txt.font}`;
+      
+      ctx.translate(txt.x, txt.y);
+      ctx.rotate((txt.rotation || 0) * Math.PI / 180);
+      ctx.fillText(txt.text, 0, 0);
+      ctx.rotate(-(txt.rotation || 0) * Math.PI / 180);
+      ctx.translate(-txt.x, -txt.y);
+    });
+    ctx.restore();
+
     const link = document.createElement("a");
-    link.href = canvasRef.current.toDataURL("image/png");
+    link.href = canvas.toDataURL("image/png");
     link.download = "sketch.png";
     link.click();
+    
+    // Redraw to remove texts from canvas (since they are DOM elements)
+    redraw();
   };
 
   return (
@@ -404,18 +507,78 @@ export default function SketchCanvas() {
             position: "absolute",
             left: textInput.x,
             top: textInput.y,
-            fontSize: size * 4,
-            color: color,
+            fontSize: textInput.size,
+            color: textInput.color,
             background: "transparent",
             border: "1px dashed #ccc",
             outline: "none",
-            fontFamily: font,
+            fontFamily: textInput.font,
             margin: 0,
             padding: 0,
             lineHeight: 1,
+            transform: `rotate(${textInput.rotation}deg)`,
+            transformOrigin: "center center",
           }}
         />
       )}
+
+      {texts.map((txt) => {
+        const isSelected = selectedTextId === txt.id && tool === "text";
+        return (
+          <div
+            key={txt.id}
+            onMouseDown={(e) => handleTextInteraction(e, txt.id, "drag")}
+            style={{
+              position: "absolute",
+              left: txt.x,
+              top: txt.y,
+              fontSize: txt.size,
+              color: txt.color,
+              fontFamily: txt.font,
+              lineHeight: 1,
+              whiteSpace: "pre",
+              cursor: tool === "text" ? "move" : "default",
+              pointerEvents: tool === "text" ? "auto" : "none",
+              userSelect: "none",
+              transform: `rotate(${txt.rotation || 0}deg)`,
+              transformOrigin: "center center",
+              border: isSelected ? "1px dashed #4f46e5" : "none",
+              padding: "2px",
+            }}
+          >
+            {txt.text}
+
+            {isSelected && (
+              <div
+                onMouseDown={(e) => handleTextInteraction(e, txt.id, "rotate")}
+                style={{
+                  position: "absolute",
+                  top: -24,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 12,
+                  height: 12,
+                  background: "#4f46e5",
+                  borderRadius: "50%",
+                  cursor: "crosshair",
+                }}
+              />
+            )}
+            {isSelected && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: -12,
+                  left: "50%",
+                  width: 1,
+                  height: 12,
+                  background: "#4f46e5",
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
