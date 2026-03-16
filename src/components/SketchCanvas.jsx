@@ -1,6 +1,95 @@
 import { useRef, useState, useEffect } from "react";
 import Toolbar from "./Toolbar";
 
+const floodFill = (ctx, startX, startY, fillColorHex) => {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+  const visited = new Uint8Array(w * h);
+  
+  let x = Math.floor(startX);
+  let y = Math.floor(startY);
+  if (x < 0 || y < 0 || x >= w || y >= h) return;
+  
+  const startPos = (y * w + x) * 4;
+  const startR = data[startPos];
+  const startG = data[startPos + 1];
+  const startB = data[startPos + 2];
+  const startA = data[startPos + 3];
+  
+  const r = parseInt(fillColorHex.slice(1, 3), 16) || 0;
+  const g = parseInt(fillColorHex.slice(3, 5), 16) || 0;
+  const b = parseInt(fillColorHex.slice(5, 7), 16) || 0;
+  const a = 255;
+  
+  const tolerance = 64;
+  const matchStartColor = (pos) => {
+    return Math.abs(data[pos] - startR) <= tolerance &&
+           Math.abs(data[pos + 1] - startG) <= tolerance &&
+           Math.abs(data[pos + 2] - startB) <= tolerance &&
+           Math.abs(data[pos + 3] - startA) <= tolerance;
+  };
+  
+  const stack = [x, y];
+  
+  while (stack.length > 0) {
+    let cy = stack.pop();
+    let cx = stack.pop();
+    
+    let pixelIdx = cy * w + cx;
+    let pos = pixelIdx * 4;
+    
+    while (cx >= 0 && matchStartColor(pos) && !visited[pixelIdx]) {
+      cx--;
+      pos -= 4;
+      pixelIdx--;
+    }
+    cx++;
+    pos += 4;
+    pixelIdx++;
+    
+    let reachUp = false;
+    let reachDown = false;
+    
+    while (cx < w && matchStartColor(pos) && !visited[pixelIdx]) {
+      data[pos] = r;
+      data[pos + 1] = g;
+      data[pos + 2] = b;
+      data[pos + 3] = a;
+      visited[pixelIdx] = 1;
+      
+      if (cy > 0) {
+        if (matchStartColor(pos - w * 4) && !visited[pixelIdx - w]) {
+          if (!reachUp) {
+            stack.push(cx, cy - 1);
+            reachUp = true;
+          }
+        } else if (reachUp) {
+          reachUp = false;
+        }
+      }
+      
+      if (cy < h - 1) {
+        if (matchStartColor(pos + w * 4) && !visited[pixelIdx + w]) {
+          if (!reachDown) {
+            stack.push(cx, cy + 1);
+            reachDown = true;
+          }
+        } else if (reachDown) {
+          reachDown = false;
+        }
+      }
+      
+      cx++;
+      pos += 4;
+      pixelIdx++;
+    }
+  }
+  
+  ctx.putImageData(imgData, 0, 0);
+};
+
 export default function SketchCanvas() {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
@@ -48,8 +137,12 @@ export default function SketchCanvas() {
     pathsRef.current.forEach((item) => {
       // 🎨 fill
       if (item.type === "fill") {
-        ctx.fillStyle = item.color;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (item.x !== undefined && item.y !== undefined) {
+          floodFill(ctx, item.x, item.y, item.color);
+        } else {
+          ctx.fillStyle = item.color;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
         return;
       }
 
@@ -116,16 +209,10 @@ export default function SketchCanvas() {
 
     // 🪣 PAINT
     if (tool === "paint") {
-      ctx.fillStyle = color;
-      ctx.fillRect(
-        0,
-        0,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
-
       pathsRef.current.push({
         type: "fill",
+        x,
+        y,
         color,
       });
 
