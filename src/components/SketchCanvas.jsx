@@ -107,6 +107,8 @@ export default function SketchCanvas() {
   const [textInput, setTextInput] = useState(null);
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [draggingText, setDraggingText] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
+  const [isHoveringCanvas, setIsHoveringCanvas] = useState(false);
 
   const pathsRef = useRef([]);
   const undoRef = useRef([]);
@@ -365,6 +367,43 @@ export default function SketchCanvas() {
     };
   }, [draggingText]);
 
+  // ================= KEYBOARD SHORTCUTS =================
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger shortcuts if user is typing in the text input
+      if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
+        return;
+      }
+
+      // Undo / Redo
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z') {
+          e.preventDefault();
+          undo();
+        } else if (e.key === 'y') {
+          e.preventDefault();
+          redo();
+        }
+        return;
+      }
+
+      // Tool Switching
+      switch (e.key.toLowerCase()) {
+        case 'b': setTool('brush'); break;
+        case 'p': setTool('pencil'); break;
+        case 'e': setTool('eraser'); break;
+        case 't': setTool('text'); break;
+        case 'r': setTool('rect'); break;
+        case 'c': setTool('circle'); break;
+        case 'f': setTool('paint'); break;
+        default: break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
   const finalizeText = () => {
     if (!textInput || !textInput.value.trim()) {
       setTextInput(null);
@@ -417,25 +456,6 @@ export default function SketchCanvas() {
     ctxRef.current.stroke();
   };
 
-  const stopDrawing = () => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-    redraw();
-  };
-
-  // ================= UNDO / REDO =================
-  const undo = () => {
-    if (!pathsRef.current.length) return;
-    undoRef.current.push(pathsRef.current.pop());
-    redraw();
-  };
-
-  const redo = () => {
-    if (!undoRef.current.length) return;
-    pathsRef.current.push(undoRef.current.pop());
-    redraw();
-  };
-
   // ================= CLEAR =================
   const clearCanvas = () => {
     if (window.confirm("Are you sure you want to clear the entire canvas?")) {
@@ -477,34 +497,59 @@ export default function SketchCanvas() {
 
   return (
     <div>
-      <Toolbar
-        tool={tool}
-        setTool={setTool}
-        color={color}
-        setColor={setColor}
-        size={size}
-        setSize={setSize}
-        font={font}
-        setFont={setFont}
-        fillShape={fillShape}
-        setFillShape={setFillShape}
-        undo={undo}
-        redo={redo}
-        clearCanvas={clearCanvas}
-        saveImage={saveImage}
-      />
+        <Toolbar
+          tool={tool}
+          setTool={setTool}
+          color={color}
+          setColor={setColor}
+          size={size}
+          setSize={setSize}
+          font={font}
+          setFont={setFont}
+          fillShape={fillShape}
+          setFillShape={setFillShape}
+          undo={undo}
+          redo={redo}
+          clearCanvas={clearCanvas}
+          saveImage={saveImage}
+        />
 
-      <canvas
-        ref={canvasRef}
-        style={{
-          display: "block",
-          touchAction: "none",
-          cursor: tool === "text" ? "text" : "crosshair",
-        }}
-        onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
-        onMouseMove={(e) => draw(e.clientX, e.clientY)}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
+        {/* Dynamic Cursor */}
+        {isHoveringCanvas && (tool === "brush" || tool === "eraser" || tool === "pencil") && (
+          <div
+            style={{
+              position: "absolute",
+              left: mousePos.x,
+              top: mousePos.y,
+              width: tool === "pencil" ? 2 : size,
+              height: tool === "pencil" ? 2 : size,
+              borderRadius: "50%",
+              border: "1px solid rgba(0,0,0,0.5)",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+              zIndex: 9999,
+            }}
+          />
+        )}
+
+        <canvas
+          ref={canvasRef}
+          style={{
+            display: "block",
+            touchAction: "none",
+            cursor: (tool === "brush" || tool === "eraser" || tool === "pencil") ? "none" : (tool === "text" ? "text" : "crosshair"),
+          }}
+          onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
+          onMouseMove={(e) => {
+            setMousePos({ x: e.clientX, y: e.clientY });
+            draw(e.clientX, e.clientY);
+          }}
+          onMouseEnter={() => setIsHoveringCanvas(true)}
+          onMouseUp={stopDrawing}
+          onMouseLeave={() => {
+            setIsHoveringCanvas(false);
+            stopDrawing();
+          }}
         onTouchStart={(e) => startDrawing(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={(e) => draw(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchEnd={stopDrawing}
