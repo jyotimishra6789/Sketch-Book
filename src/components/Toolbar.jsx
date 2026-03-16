@@ -46,11 +46,27 @@ export default function Toolbar({
             onChange={(e) => setFont(e.target.value)}
             style={styles.fontSelect}
           >
-            <option value="Arial">Arial</option>
-            <option value="'Courier New', Courier, monospace">Courier</option>
-            <option value="'Times New Roman', Times, serif">Times New</option>
-            <option value="'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">Trebuchet</option>
-            <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans</option>
+            <optgroup label="Popular (Figma-like)">
+              <option value="'Inter', sans-serif">Inter</option>
+              <option value="'Roboto', sans-serif">Roboto</option>
+              <option value="'Open Sans', sans-serif">Open Sans</option>
+              <option value="'Lato', sans-serif">Lato</option>
+              <option value="'Montserrat', sans-serif">Montserrat</option>
+              <option value="'Poppins', sans-serif">Poppins</option>
+              <option value="'Playfair Display', serif">Playfair Display</option>
+              <option value="'Merriweather', serif">Merriweather</option>
+              <option value="'Nunito', sans-serif">Nunito</option>
+              <option value="'Raleway', sans-serif">Raleway</option>
+              <option value="'Ubuntu', sans-serif">Ubuntu</option>
+              <option value="'Roboto Mono', monospace">Roboto Mono</option>
+            </optgroup>
+            <optgroup label="System Fonts">
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Courier New', Courier, monospace">Courier</option>
+              <option value="'Times New Roman', Times, serif">Times New</option>
+              <option value="'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">Trebuchet</option>
+              <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans</option>
+            </optgroup>
           </select>
         )}
       </div>
