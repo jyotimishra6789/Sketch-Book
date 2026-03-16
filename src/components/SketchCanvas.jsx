@@ -354,6 +354,25 @@ export default function SketchCanvas() {
     }
   };
 
+  const stopDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    redraw();
+  };
+
+  // ================= UNDO / REDO =================
+  const undo = () => {
+    if (!pathsRef.current.length) return;
+    undoRef.current.push(pathsRef.current.pop());
+    redraw();
+  };
+
+  const redo = () => {
+    if (!undoRef.current.length) return;
+    pathsRef.current.push(undoRef.current.pop());
+    redraw();
+  };
+
   const handleGlobalMouseUp = () => {
     setDraggingText(null);
   };

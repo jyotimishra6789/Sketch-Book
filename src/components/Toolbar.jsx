@@ -102,7 +102,7 @@ function IconButton({ icon, onClick, active, title }) {
         ...(active ? styles.activeIcon : {}),
       }}
       onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = "#f0f0f0";
+        if (!active) e.currentTarget.style.background = "rgba(240, 240, 240, 0.6)";
       }}
       onMouseLeave={(e) => {
         if (!active) e.currentTarget.style.background = "none";
@@ -116,16 +116,19 @@ function IconButton({ icon, onClick, active, title }) {
 const styles = {
   toolbar: {
     position: "fixed",
-    top: 20,
-    left: 20,
-    background: "#fff",
-    padding: 14,
-    borderRadius: 14,
+    top: 24,
+    left: 24,
+    background: "rgba(255, 255, 255, 0.75)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    padding: "12px 20px",
+    borderRadius: 16,
     display: "flex",
-    gap: 16,
+    gap: 20,
     alignItems: "center",
     flexWrap: "wrap",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.05)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
     zIndex: 10,
   },
   group: {
@@ -137,14 +140,14 @@ const styles = {
     background: "none",
     border: "1px solid transparent",
     padding: 8,
-    borderRadius: 8,
+    borderRadius: 10,
     cursor: "pointer",
     transition: "all 0.2s ease",
   },
   activeIcon: {
-    border: "1px solid #4f46e5",
-    background: "#eef2ff",
-    boxShadow: "0 2px 4px rgba(79, 70, 229, 0.2)",
+    border: "1px solid rgba(79, 70, 229, 0.4)",
+    background: "rgba(238, 242, 255, 0.8)",
+    boxShadow: "0 2px 8px rgba(79, 70, 229, 0.15)",
   },
   iconImg: {
     width: 26,
@@ -152,12 +155,13 @@ const styles = {
   },
   actionBtn: {
     padding: "8px 16px",
-    borderRadius: 8,
-    border: "1px solid #ddd",
-    background: "#fdfdfd",
+    borderRadius: 10,
+    border: "1px solid rgba(221, 221, 221, 0.8)",
+    background: "rgba(255, 255, 255, 0.6)",
+    backdropFilter: "blur(4px)",
     cursor: "pointer",
     fontWeight: "500",
-    color: "#333",
+    color: "#444",
     transition: "all 0.2s ease",
     boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
   },
