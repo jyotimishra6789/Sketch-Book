@@ -72,36 +72,43 @@ export default function Toolbar({
       </div>
 
       <div style={styles.group}>
-        <IconButton icon="paint-bucket.png" active={tool === "paint"} onClick={() => setTool("paint")} />
-        <IconButton icon="brush.png" active={tool === "brush"} onClick={() => setTool("brush")} />
-        <IconButton icon="pencil.png" active={tool === "pencil"} onClick={() => setTool("pencil")} />
-        <IconButton icon="eraser.png" active={tool === "eraser"} onClick={() => setTool("eraser")} />
-        <IconButton icon="text.png" active={tool === "text"} onClick={() => setTool("text")} />
+        <IconButton title="Paint Bucket (f)" icon="paint-bucket.png" active={tool === "paint"} onClick={() => setTool("paint")} />
+        <IconButton title="Brush (b)" icon="brush.png" active={tool === "brush"} onClick={() => setTool("brush")} />
+        <IconButton title="Pencil (p)" icon="pencil.png" active={tool === "pencil"} onClick={() => setTool("pencil")} />
+        <IconButton title="Eraser (e)" icon="eraser.png" active={tool === "eraser"} onClick={() => setTool("eraser")} />
+        <IconButton title="Text (t)" icon="text.png" active={tool === "text"} onClick={() => setTool("text")} />
         <div style={{ width: 1, height: 24, background: "#ccc", margin: "0 4px" }} />
-        <IconButton icon="rect.png" active={tool === "rect"} onClick={() => setTool("rect")} />
-        <IconButton icon="circle.png" active={tool === "circle"} onClick={() => setTool("circle")} />
+        <IconButton title="Rectangle (r)" icon="rect.png" active={tool === "rect"} onClick={() => setTool("rect")} />
+        <IconButton title="Circle (c)" icon="circle.png" active={tool === "circle"} onClick={() => setTool("circle")} />
       </div>
 
       <div style={styles.group}>
-        <button style={styles.actionBtn} onClick={undo}>Undo</button>
-        <button style={styles.actionBtn} onClick={redo}>Redo</button>
-        <button style={styles.actionBtn} onClick={clearCanvas}>Clear</button>
-        <button style={styles.actionBtn} onClick={saveImage}>Save</button>
+        <button title="Undo (Ctrl+Z)" style={styles.actionBtn} onClick={undo}>Undo</button>
+        <button title="Redo (Ctrl+Y)" style={styles.actionBtn} onClick={redo}>Redo</button>
+        <button title="Clear Canvas" style={styles.actionBtn} onClick={clearCanvas}>Clear</button>
+        <button title="Save Image" style={styles.actionBtn} onClick={saveImage}>Save</button>
       </div>
     </div>
   );
 }
 
-function IconButton({ icon, onClick, active }) {
+function IconButton({ icon, onClick, active, title }) {
   return (
     <button
       onClick={onClick}
+      title={title}
       style={{
         ...styles.iconBtn,
         ...(active ? styles.activeIcon : {}),
       }}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.background = "#f0f0f0";
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.background = "none";
+      }}
     >
-      <img src={icon} alt="" style={styles.iconImg} />
+      <img src={icon} alt={title || ""} style={styles.iconImg} />
     </button>
   );
 }
@@ -129,24 +136,30 @@ const styles = {
   iconBtn: {
     background: "none",
     border: "1px solid transparent",
-    padding: 6,
+    padding: 8,
     borderRadius: 8,
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
   activeIcon: {
     border: "1px solid #4f46e5",
     background: "#eef2ff",
+    boxShadow: "0 2px 4px rgba(79, 70, 229, 0.2)",
   },
   iconImg: {
     width: 26,
     height: 26,
   },
   actionBtn: {
-    padding: "6px 12px",
+    padding: "8px 16px",
     borderRadius: 8,
     border: "1px solid #ddd",
-    background: "#f9f9f9",
+    background: "#fdfdfd",
     cursor: "pointer",
+    fontWeight: "500",
+    color: "#333",
+    transition: "all 0.2s ease",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
   },
   fontSelect: {
     padding: "4px 8px",
