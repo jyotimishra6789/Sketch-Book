@@ -7,6 +7,8 @@ export default function Toolbar({
   setSize,
   font,
   setFont,
+  fillShape,
+  setFillShape,
   undo,
   redo,
   clearCanvas,
@@ -28,6 +30,16 @@ export default function Toolbar({
           value={size}
           onChange={(e) => setSize(Number(e.target.value))}
         />
+        {(tool === "rect" || tool === "circle") && (
+          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14 }}>
+            <input 
+              type="checkbox" 
+              checked={fillShape} 
+              onChange={(e) => setFillShape(e.target.checked)} 
+            />
+            Fill
+          </label>
+        )}
         {tool === "text" && (
           <select 
             value={font} 

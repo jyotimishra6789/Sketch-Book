@@ -9,6 +9,7 @@ export default function SketchCanvas() {
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [font, setFont] = useState("Arial");
+  const [fillShape, setFillShape] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [textInput, setTextInput] = useState(null);
 
@@ -63,15 +64,21 @@ export default function SketchCanvas() {
 
       // 🟥 shape (rect/circle)
       if (item.type === "shape") {
-        ctx.strokeStyle = item.color;
-        ctx.lineWidth = item.size;
         ctx.beginPath();
         if (item.shape === "rect") {
           ctx.rect(item.x, item.y, item.w, item.h);
         } else if (item.shape === "circle") {
           ctx.arc(item.x, item.y, item.r, 0, 2 * Math.PI);
         }
-        ctx.stroke();
+        
+        if (item.fillShape) {
+          ctx.fillStyle = item.color;
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = item.color;
+          ctx.lineWidth = item.size;
+          ctx.stroke();
+        }
         return;
       }
 
@@ -138,6 +145,7 @@ export default function SketchCanvas() {
         shape: tool,
         color: activeColor,
         size,
+        fillShape,
         x,
         y,
         w: 0,
@@ -271,6 +279,8 @@ export default function SketchCanvas() {
         setSize={setSize}
         font={font}
         setFont={setFont}
+        fillShape={fillShape}
+        setFillShape={setFillShape}
         undo={undo}
         redo={redo}
         clearCanvas={clearCanvas}
